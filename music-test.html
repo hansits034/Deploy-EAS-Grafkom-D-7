@@ -1,0 +1,1589 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <title>Museum Nusantara - Virtual Tour</title>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Cinzel:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        body { margin: 0; overflow: hidden; background: #000; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        
+        /* UI UTAMA - TRADITIONAL INDONESIAN THEME */
+        #overlay {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: linear-gradient(135deg, #1a0a00 0%, #2d1810 25%, #1a0a00 50%, #2d1810 75%, #1a0a00 100%);
+            display: flex; flex-direction: column;
+            justify-content: center; align-items: center; z-index: 10; color: white;
+            text-align: center; cursor: pointer; transition: opacity 0.8s;
+        }
+
+        /* Batik Pattern Overlay */
+        #overlay::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background-image: 
+                repeating-linear-gradient(45deg, transparent, transparent 20px, rgba(255,215,0,0.03) 20px, rgba(255,215,0,0.03) 40px),
+                repeating-linear-gradient(-45deg, transparent, transparent 20px, rgba(139,69,19,0.05) 20px, rgba(139,69,19,0.05) 40px);
+            pointer-events: none;
+        }
+
+        /* Decorative Corner Ornaments */
+        .corner-ornament {
+            position: absolute;
+            width: 150px;
+            height: 150px;
+            border: 3px solid #8B4513;
+            opacity: 0.6;
+        }
+        .corner-ornament::before,
+        .corner-ornament::after {
+            content: '';
+            position: absolute;
+            background: #ffd700;
+        }
+        .corner-top-left { top: 30px; left: 30px; border-right: none; border-bottom: none; }
+        .corner-top-right { top: 30px; right: 30px; border-left: none; border-bottom: none; }
+        .corner-bottom-left { bottom: 30px; left: 30px; border-right: none; border-top: none; }
+        .corner-bottom-right { bottom: 30px; right: 30px; border-left: none; border-top: none; }
+
+        /* Main Content Container */
+        #home-screen {
+            position: relative;
+            padding: 60px 80px;
+            background: linear-gradient(180deg, rgba(45,24,16,0.95) 0%, rgba(26,10,0,0.98) 100%);
+            border: 4px solid #8B4513;
+            border-radius: 10px;
+            box-shadow: 
+                0 0 60px rgba(255,215,0,0.15),
+                inset 0 0 100px rgba(139,69,19,0.2),
+                0 20px 60px rgba(0,0,0,0.5);
+            max-width: 700px;
+        }
+
+        /* Decorative Top Border */
+        #home-screen::before {
+            content: '';
+            position: absolute;
+            top: -15px; left: 50%;
+            transform: translateX(-50%);
+            width: 200px; height: 30px;
+            background: linear-gradient(90deg, transparent, #ffd700 20%, #ffd700 80%, transparent);
+            clip-path: polygon(10% 100%, 0% 0%, 100% 0%, 90% 100%);
+        }
+
+        /* Decorative Bottom Border */
+        #home-screen::after {
+            content: '';
+            position: absolute;
+            bottom: -15px; left: 50%;
+            transform: translateX(-50%);
+            width: 200px; height: 30px;
+            background: linear-gradient(90deg, transparent, #ffd700 20%, #ffd700 80%, transparent);
+            clip-path: polygon(0% 0%, 10% 100%, 90% 100%, 100% 0%);
+        }
+
+        /* Title Styling */
+        .museum-title {
+            font-family: 'Cinzel', serif;
+            font-size: 52px;
+            font-weight: 700;
+            color: #ffd700;
+            text-shadow: 
+                0 0 20px rgba(255,215,0,0.5),
+                0 4px 8px rgba(0,0,0,0.5),
+                2px 2px 0 #8B4513;
+            letter-spacing: 8px;
+            margin-bottom: 5px;
+            animation: titleGlow 3s ease-in-out infinite;
+        }
+
+        @keyframes titleGlow {
+            0%, 100% { text-shadow: 0 0 20px rgba(255,215,0,0.5), 0 4px 8px rgba(0,0,0,0.5), 2px 2px 0 #8B4513; }
+            50% { text-shadow: 0 0 40px rgba(255,215,0,0.8), 0 4px 8px rgba(0,0,0,0.5), 2px 2px 0 #8B4513; }
+        }
+
+        .subtitle {
+            font-family: 'Playfair Display', serif;
+            font-size: 18px;
+            color: #d4a574;
+            letter-spacing: 4px;
+            margin-bottom: 30px;
+            font-style: italic;
+        }
+
+        /* Decorative Divider */
+        .divider {
+            width: 80%;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, #8B4513 20%, #ffd700 50%, #8B4513 80%, transparent);
+            margin: 25px auto;
+            position: relative;
+        }
+        .divider::before {
+            content: '❖';
+            position: absolute;
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            background: #1a0a00;
+            padding: 0 15px;
+            color: #ffd700;
+            font-size: 20px;
+        }
+
+        /* Instrument List */
+        .instrument-showcase {
+            display: flex;
+            justify-content: center;
+            gap: 30px;
+            margin: 25px 0;
+            flex-wrap: wrap;   
+        }
+        
+        .instrument-item {
+            text-align: center;
+            padding: 15px 20px;
+            background: rgba(139,69,19,0.2);
+            border: 1px solid #8B4513;
+            border-radius: 8px;
+            transition: all 0.3s;
+        }
+        .instrument-item:hover {
+            background: rgba(255,215,0,0.1);
+            border-color: #ffd700;
+            transform: translateY(-5px);
+        }
+        .instrument-icon {
+            font-size: 32px;
+            margin-bottom: 8px;
+        }
+        .instrument-name {
+            font-family: 'Playfair Display', serif;
+            color: #d4a574;
+            font-size: 10px;
+            letter-spacing: 2px;
+        }
+
+        /* Controls Section */
+        .controls-section {
+            background: rgba(0,0,0,0.3);
+            padding: 20px 30px;
+            border-radius: 8px;
+            margin-top: 20px;
+            border: 1px solid rgba(139,69,19,0.5);
+        }
+        .controls-title {
+            color: #d4a574;
+            font-size: 14px;
+            letter-spacing: 3px;
+            margin-bottom: 15px;
+        }
+        .control-row {
+            margin: 10px 0;
+            color: #c9a67a;
+            font-size: 14px;
+        }
+
+        kbd {
+            background: linear-gradient(180deg, #3d2817, #2a1a0f);
+            padding: 6px 12px;
+            border-radius: 5px;
+            border: 1px solid #8B4513;
+            font-weight: bold;
+            color: #ffd700;
+            text-transform: uppercase;
+            box-shadow: 0 3px 0 #1a0a00, 0 4px 5px rgba(0,0,0,0.3);
+            font-size: 12px;
+            margin: 0 3px;
+        }
+
+        /* Enter Button */
+        .enter-button {
+            margin-top: 30px;
+            padding: 18px 50px;
+            background: linear-gradient(180deg, #8B4513 0%, #5c2d0e 100%);
+            border: 2px solid #ffd700;
+            border-radius: 8px;
+            color: #ffd700;
+            font-family: 'Cinzel', serif;
+            font-size: 18px;
+            letter-spacing: 5px;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 5px 20px rgba(139,69,19,0.5);
+            animation: pulse 2s ease-in-out infinite;
+        }
+        .enter-button:hover {
+            background: linear-gradient(180deg, #a0522d 0%, #8B4513 100%);
+            box-shadow: 0 5px 30px rgba(255,215,0,0.4);
+            transform: scale(1.05);
+        }
+
+        @keyframes pulse {
+            0%, 100% { box-shadow: 0 5px 20px rgba(139,69,19,0.5); }
+            50% { box-shadow: 0 5px 30px rgba(255,215,0,0.3); }
+        }
+
+        /* Floating Particles */
+        .particle {
+            position: absolute;
+            width: 4px;
+            height: 4px;
+            background: #ffd700;
+            border-radius: 50%;
+            opacity: 0;
+            animation: float 8s infinite;
+        }
+
+        @keyframes float {
+            0% { opacity: 0; transform: translateY(100vh) rotate(0deg); }
+            10% { opacity: 0.6; }
+            90% { opacity: 0.6; }
+            100% { opacity: 0; transform: translateY(-100vh) rotate(720deg); }
+        }
+
+        #crosshair {
+            position: absolute; top: 50%; left: 50%; width: 6px; height: 6px;
+            background: rgba(255, 255, 255, 0.8); border-radius: 50%;
+            transform: translate(-50%, -50%); pointer-events: none; z-index: 5;
+            border: 1px solid black; mix-blend-mode: difference;
+            transition: all 0.2s;
+        }
+
+        /* Indikator saat Mode Main Aktif */
+        .crosshair-active {
+            width: 20px !important;
+            height: 20px !important;
+            background: transparent !important;
+            border: 2px solid #ffd700 !important;
+        }
+
+        #instructions {
+            background: rgba(30, 30, 30, 0.8); padding: 40px; border: 1px solid #666; border-radius: 4px;
+        }
+        
+        h1 { letter-spacing: 5px; margin-bottom: 5px; }
+        h3 { color: #888; font-weight: normal; margin-top: 0; }
+
+        /* PANEL INFORMASI (KIRI) */
+        #info-panel {
+            position: absolute;
+            top: 50%;
+            left: 30px;
+            transform: translateY(-50%);
+            width: 320px;
+            color: #eee;
+            background: linear-gradient(90deg, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0) 100%);
+            padding: 20px;
+            padding-right: 50px;
+            border-left: 4px solid #444; /* Default Gray */
+            opacity: 0; 
+            transition: opacity 0.5s ease-in-out;
+            pointer-events: none; 
+            z-index: 2;
+        }
+
+        #info-title {
+            font-size: 24px;
+            font-weight: bold;
+            color: #ffd700;
+            margin-bottom: 10px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        #info-desc { font-size: 14px; line-height: 1.6; margin-bottom: 15px; }
+
+        #action-prompt {
+            margin-top: 15px;
+            padding: 10px;
+            background: rgba(255, 215, 0, 0.2);
+            border: 1px solid #ffd700;
+            color: #ffd700;
+            font-weight: bold;
+            display: inline-block;
+            border-radius: 4px;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        #mode-indicator {
+            position: absolute; top: 20px; right: 20px;
+            font-size: 20px; font-weight: bold; color: #0f0;
+            text-shadow: 0 0 10px #0f0;
+            display: none; z-index: 5;
+            text-align: right;
+        }
+        
+        .key-row { display: block; margin-top: 4px; font-size: 12px; color: #aaa; }
+    </style>
+    
+    <script type="importmap">
+        {
+            "imports": {
+                "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+                "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
+            }
+        }
+    </script>
+</head>
+<body>
+
+    <div id="crosshair"></div>
+    <div id="mode-indicator">♫ PERFORMING MODE ♫<br><span style="font-size:12px; color: white;">Tekan CTRL untuk Keluar</span></div>
+
+    <div id="info-panel">
+        <div id="info-title">NAMA ALAT</div>
+        <div id="info-desc">Deskripsi alat musik.</div>
+        <div id="action-prompt">TEKAN <kbd>CTRL</kbd> UNTUK BERMAIN</div>
+        
+        <div id="controls-hint" style="display:none; margin-top:15px;">
+            <div style="border-top: 1px solid #555; margin: 10px 0;"></div>
+            <strong>KEYBOARD NADA:</strong><br>
+            <span class="key-row"><kbd>Q</kbd>..<kbd>P</kbd> (Nada Tinggi)</span>
+            <span class="key-row"><kbd>A</kbd>..<kbd>L</kbd> (Nada Sedang)</span>
+            <span class="key-row"><kbd>Z</kbd>..<kbd>M</kbd> (Nada Rendah)</span>
+        </div>
+    </div>
+
+    <div id="overlay">
+        <!-- Corner Ornaments -->
+        <div class="corner-ornament corner-top-left"></div>
+        <div class="corner-ornament corner-top-right"></div>
+        <div class="corner-ornament corner-bottom-left"></div>
+        <div class="corner-ornament corner-bottom-right"></div>
+
+        <!-- Floating Particles -->
+        <div class="particle" style="left: 10%; animation-delay: 0s;"></div>
+        <div class="particle" style="left: 20%; animation-delay: 1s;"></div>
+        <div class="particle" style="left: 30%; animation-delay: 2s;"></div>
+        <div class="particle" style="left: 40%; animation-delay: 3s;"></div>
+        <div class="particle" style="left: 50%; animation-delay: 4s;"></div>
+        <div class="particle" style="left: 60%; animation-delay: 5s;"></div>
+        <div class="particle" style="left: 70%; animation-delay: 6s;"></div>
+        <div class="particle" style="left: 80%; animation-delay: 7s;"></div>
+        <div class="particle" style="left: 90%; animation-delay: 0.5s;"></div>
+
+        <!-- Main Content -->
+        <div id="home-screen">
+            <h1 class="museum-title">MUSEUM NUSANTARA</h1>
+            <p class="subtitle">Warisan Budaya Indonesia</p>
+            
+            <div class="divider"></div>
+
+            <div class="instrument-showcase">
+                <div class="instrument-item">
+                    <div class="instrument-icon">🎋</div>
+                    <div class="instrument-name">Angklung</div>
+                </div>
+                <div class="instrument-item">
+                    <div class="instrument-icon">🔔</div>
+                    <div class="instrument-name">Gong</div>
+                </div>
+                <div class="instrument-item">
+                    <div class="instrument-icon">🎵</div>
+                    <div class="instrument-name">Kecapi</div>
+                </div>
+                <div class="instrument-item">
+                    <div class="instrument-icon">🎸</div>
+                    <div class="instrument-name">Rebab</div>
+                </div>
+                <div class="instrument-item">
+                    <div class="instrument-icon">🛎️</div>
+                    <div class="instrument-name">Bonang</div>
+                </div>
+                <div class="instrument-item">
+                    <div class="instrument-icon">🎹</div>
+                    <div class="instrument-name">Kolintang</div>
+                </div>
+            </div>
+
+            <div class="divider"></div>
+
+            <div class="controls-section">
+                <div class="controls-title">KONTROL NAVIGASI</div>
+                <div class="control-row">Berjalan: <kbd>W</kbd> <kbd>A</kbd> <kbd>S</kbd> <kbd>D</kbd></div>
+                <div class="control-row">Bermain Musik: Dekati alat & tekan <kbd>CTRL</kbd></div>
+            </div>
+
+            <button class="enter-button" id="enter-btn">MASUK MUSEUM</button>
+        </div>
+    </div>
+
+    <script type="module">
+        import * as THREE from 'three';
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import { PointerLockControls } from 'three/addons/controls/PointerLockControls.js';
+
+// --- GLOBAL VARIABLES ---
+const instruments = { angklung: [], kolintang: [], gong: [], bonang: [], kecapi: [], rebab: [] };
+let activeInstrumentName = null; 
+
+// STATUS MODE
+let isPerforming = false;
+let hoveredObject = null;
+let isPlayingGundhulPacul = false; // Status baru untuk playback otomatis
+let playbackTimeout = null; // Untuk menghentikan playback
+
+// --- 1. SETUP SCENE ---
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0xcccccc);
+scene.fog = new THREE.Fog(0xcccccc, 10, 50);
+
+const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
+camera.position.set(0, 1.7, 33); 
+
+const renderer = new THREE.WebGLRenderer({ antialias: true });
+renderer.setSize(window.innerWidth, window.innerHeight);
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 1.1;
+document.body.appendChild(renderer.domElement);
+
+// --- 2. LIGHTING ---
+const hemiLight = new THREE.HemisphereLight(0xffffff, 0x444444, 1.5);
+hemiLight.position.set(0, 20, 0);
+scene.add(hemiLight);
+
+const dirLight = new THREE.DirectionalLight(0xffffff, 1.5);
+dirLight.position.set(5, 15, 10);
+dirLight.castShadow = true;
+dirLight.shadow.mapSize.set(2048, 2048);
+scene.add(dirLight);
+
+// --- 3. ASSET LOADER (Tidak ada perubahan di bagian ini) ---
+const gltfLoader = new GLTFLoader();
+
+function normalizeModel(model, targetHeight) {
+    const box = new THREE.Box3().setFromObject(model);
+    const size = box.getSize(new THREE.Vector3());
+    const center = box.getCenter(new THREE.Vector3());
+    model.position.sub(center); 
+    const scale = targetHeight / size.y;
+    model.scale.setScalar(scale);
+    return model;
+}
+
+// A. GALLERY
+gltfLoader.load('./art_gallery.glb', (gltf) => {
+    const building = gltf.scene;
+    building.traverse(c => { if(c.isMesh) { c.castShadow = true; c.receiveShadow = true; }});
+    scene.add(building);
+}, undefined, (e) => console.error(e));
+
+// PATUNG ENTRANCE
+gltfLoader.load('./patung_enterance.glb', (gltf) => {
+    const patung = normalizeModel(gltf.scene, 3.5);
+    patung.traverse(c => { if(c.isMesh) { c.castShadow = true; c.receiveShadow = true; }});
+    patung.position.set(-4, 0, 26);
+    patung.rotation.y = Math.PI / 4; 
+    scene.add(patung);
+}, undefined, (e) => console.error("Patung Entrance Left error", e));
+
+gltfLoader.load('./patung_enterance.glb', (gltf) => {
+    const patung = normalizeModel(gltf.scene, 3.5);
+    patung.traverse(c => { if(c.isMesh) { c.castShadow = true; c.receiveShadow = true; }});
+    patung.position.set(4, 0, 26.7);
+    patung.rotation.y = -Math.PI / 4; 
+    scene.add(patung);
+}, undefined, (e) => console.error("Patung Entrance Right error", e));
+
+// B. ANGKLUNG
+const angklungNotes = [0, 2, 4, 5, 7, 9, 11, 12]; 
+gltfLoader.load('./angklung.glb', (gltf) => {
+    const original = normalizeModel(gltf.scene, 2.0); 
+    const baseScale = original.scale.x;
+
+    angklungNotes.forEach((semitone, i) => {
+        const angklung = original.clone();
+        const xPos = ((i - 3.5) * 1) - 10; 
+        angklung.position.set(xPos, 1.2, -9); 
+        const s = baseScale * (1.0 - (i * 0.05));
+        angklung.scale.setScalar(s);
+        angklung.userData = { 
+            type: 'instrument', soundName: 'angklung', pitch: semitone * 100,
+            originalScale: angklung.scale.clone(), animTimeout: null
+        };
+        scene.add(angklung);
+        instruments.angklung.push(angklung);
+
+        const ped = new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.5, 1, 32), new THREE.MeshStandardMaterial({ color: 0x333 }));
+        ped.position.set(xPos, 0.5, -9);
+        scene.add(ped);
+    });
+});
+
+// C. GONG
+gltfLoader.load('./gong.glb', (gltf) => {
+    const gong = normalizeModel(gltf.scene, 2.5); 
+    gong.position.set(10, 0.5, 1); 
+    gong.userData = { 
+        type: 'instrument', soundName: 'gong', pitch: 0,
+        originalScale: gong.scale.clone(), animTimeout: null
+    };
+    gong.traverse(c => { if(c.isMesh) { c.castShadow = true; c.material.color = new THREE.Color(0xffd700); }});
+    scene.add(gong);
+    instruments.gong.push(gong);
+    
+    const ped = new THREE.Mesh(new THREE.BoxGeometry(2.2, 0.5, 2), new THREE.MeshStandardMaterial({ color: 0x5a0000 }));
+    ped.position.set(10, 0.25, 1); scene.add(ped);
+}, undefined, (e) => console.error("Gong error", e));
+
+// D. BONANG 
+gltfLoader.load('./Bonang.glb', (gltf) => {
+    const bonangGroup = normalizeModel(gltf.scene, 1.3);
+    bonangGroup.position.set(-10, 0.25, 1);
+    const pots = [];
+    bonangGroup.traverse((child) => {
+        if (child.isMesh) {
+            child.castShadow = true;
+            child.receiveShadow = true;
+            if (child.name.includes("Kempyang") || child.name.includes("Kethuk")) {
+                child.userData.originalY = child.position.y;
+                pots.push(child);
+            }
+        }
+    });
+    pots.sort((a, b) => {
+        const posA = new THREE.Vector3(); a.getWorldPosition(posA);
+        const posB = new THREE.Vector3(); b.getWorldPosition(posB);
+        return posA.x - posB.x; 
+    });
+    pots.forEach((pot, index) => {
+        pot.userData = {
+            type: 'instrument', 
+            soundName: 'bonang', 
+            pitch: index * 100, 
+            originalY: pot.position.y
+        };
+        instruments.bonang.push(pot);
+    });
+    scene.add(bonangGroup);
+}, undefined, (e) => console.error("Bonang error", e));
+
+//  E. KECAPI 
+gltfLoader.load('./kecapi.glb', (gltf) => {
+    
+    const kecapi = normalizeModel(gltf.scene, 0.5); 
+    
+    
+    const newKecapiPos = new THREE.Vector3(9.9, 0.5, 11);
+    kecapi.position.copy(newKecapiPos); 
+    
+    kecapi.rotation.y = Math.PI / 2; 
+    
+    kecapi.traverse(c => { 
+        if(c.isMesh) { 
+            c.castShadow = true; 
+            c.receiveShadow = true; 
+        }
+    });
+
+    // Setup User Data untuk interaksi
+    kecapi.userData = { 
+        type: 'instrument', 
+        soundName: 'kecapi', 
+        pitch: 0, 
+        originalScale: kecapi.scale.clone(), 
+        animTimeout: null
+    };
+
+    scene.add(kecapi);
+
+    // Masukkan ke array instruments (20 nada)
+    for(let i = 0; i < 20; i++) {
+        instruments.kecapi.push(kecapi);
+    }
+
+    // Tambahkan dudukan (meja kecil)
+    const ped = new THREE.Mesh(
+        new THREE.BoxGeometry(1.5, 0.5, 1.5), 
+        new THREE.MeshStandardMaterial({ color: 0x5a3a22 })
+    );
+    // Sesuaikan posisi dudukan (Y lebih rendah dari kecapi)
+    ped.position.set(newKecapiPos.x, 0.25, newKecapiPos.z); 
+    ped.rotation.y = Math.PI / 2; 
+    
+    ped.castShadow = true;
+    ped.receiveShadow = true;
+    scene.add(ped);
+
+}, undefined, (e) => console.error("Kecapi error", e));
+
+// F. REBAB 
+gltfLoader.load('./rebab.glb', (gltf) => {
+    
+    const rebab = normalizeModel(gltf.scene, 2.0); 
+    
+    const newRebabPos = new THREE.Vector3(-9.9, 0.25, 11); 
+    rebab.position.copy(newRebabPos); 
+    
+    rebab.rotation.y = -Math.PI / 2; 
+    
+    rebab.traverse(c => { 
+        if(c.isMesh) { 
+            c.castShadow = true; 
+            c.receiveShadow = true; 
+        }
+    });
+
+    // Setup User Data untuk interaksi
+    rebab.userData = { 
+        type: 'instrument', 
+        soundName: 'rebab', 
+        pitch: 0, 
+        originalScale: rebab.scale.clone(), 
+        animTimeout: null
+    };
+
+    scene.add(rebab);
+
+    // Masukkan ke array instruments (20 nada)
+    for(let i = 0; i < 20; i++) {
+        instruments.rebab.push(rebab);
+    }
+
+    // Tambahkan dudukan (meja kecil)
+    const ped = new THREE.Mesh(
+        new THREE.BoxGeometry(1.5, 0.5, 1.5), 
+        new THREE.MeshStandardMaterial({ color: 0x5a3a22 })
+    );
+    // Sesuaikan posisi dudukan (Y lebih rendah dari rebab)
+    ped.position.set(newRebabPos.x, 0, newRebabPos.z); 
+    ped.rotation.y = -Math.PI / 2; 
+    
+    ped.castShadow = true;
+    ped.receiveShadow = true;
+    scene.add(ped);
+
+}, undefined, (e) => console.error("Rebab error", e));
+
+
+// DEKORASI & PAINTINGS (Tidak ada perubahan di bagian ini)
+gltfLoader.load('./bonsai.glb', (gltf) => {
+    const bonsai = normalizeModel(gltf.scene, 3.1);
+    bonsai.traverse(c => { if(c.isMesh) { c.castShadow = true; c.receiveShadow = true; }});
+    bonsai.position.set(-10, 0, 8.7); 
+    scene.add(bonsai);
+});
+
+gltfLoader.load('./bonsai_pink.glb', (gltf) => {
+    const bonsai = normalizeModel(gltf.scene, 3.1);
+    bonsai.traverse(c => { if(c.isMesh) { c.castShadow = true; c.receiveShadow = true; }});
+    bonsai.position.set(10, 0, 8.6); 
+    bonsai.rotation.y = Math.PI / 4;
+    scene.add(bonsai);
+});
+
+gltfLoader.load('./painting_japanese.glb', (gltf) => {
+    const painting = normalizeModel(gltf.scene, 3.1);
+    painting.traverse(c => { if(c.isMesh) { c.castShadow = true; c.receiveShadow = true; }});
+    painting.position.set(11, 0.6, 9.385);
+    painting.rotation.y = Math.PI;
+    scene.add(painting);
+});
+
+gltfLoader.load('./painting_7.glb', (gltf) => {
+    const painting = normalizeModel(gltf.scene, 2.8);
+    painting.traverse(c => { if(c.isMesh) { c.castShadow = true; c.receiveShadow = true; }});
+    painting.position.set(-10, 0.6, 9.85);
+    painting.rotation.y = Math.PI;
+    scene.add(painting);
+});
+
+gltfLoader.load('./painting_5.glb', (gltf) => {
+    const painting = gltf.scene;
+    painting.traverse(c => { if(c.isMesh) { c.castShadow = true; c.receiveShadow = true; }});
+    painting.scale.setScalar(2.6);
+    painting.position.set(-21.875, 3, 5);
+    painting.rotation.y = Math.PI / 2;
+    scene.add(painting);
+});
+
+gltfLoader.load('./painting_6.glb', (gltf) => {
+    const painting = gltf.scene;
+    painting.traverse(c => { if(c.isMesh) { c.castShadow = true; c.receiveShadow = true; }});
+    painting.scale.setScalar(5.5);
+    painting.position.set(-21.875, 3, -5);
+    painting.rotation.y = Math.PI / 2;
+    scene.add(painting);
+});
+
+gltfLoader.load('./landscape_painting.glb', (gltf) => {
+    const painting = normalizeModel(gltf.scene, 3.5);
+    painting.traverse(c => { if(c.isMesh) { c.castShadow = true; c.receiveShadow = true; }});
+    painting.position.set(21.8, -1, 6.2);
+    painting.rotation.y = - Math.PI / 2;
+    scene.add(painting);
+});
+
+gltfLoader.load('./patung_kayu.glb', (gltf) => {
+    const patungKayu = normalizeModel(gltf.scene, 2.5);
+    patungKayu.traverse(c => { if(c.isMesh) { c.castShadow = true; c.receiveShadow = true; }});
+    patungKayu.position.set(0, 5, -19.5);
+    scene.add(patungKayu);
+});
+
+gltfLoader.load('./table_display.glb', (gltf) => {
+    const table = normalizeModel(gltf.scene, 1.2);
+    table.traverse(c => { if(c.isMesh) { c.castShadow = true; c.receiveShadow = true; }});
+    table.position.set(21.5, 0, -1.85); 
+    table.rotation.y = Math.PI / 2;
+    scene.add(table);
+}, undefined, (e) => console.error("Table Display error", e));
+
+gltfLoader.load('./table_display.glb', (gltf) => {
+    const table = normalizeModel(gltf.scene, 1.2);
+    table.traverse(c => { if(c.isMesh) { c.castShadow = true; c.receiveShadow = true; }});
+    table.position.set(21.5, 0, -6.5); 
+    table.rotation.y = Math.PI / 2;
+    scene.add(table);
+}, undefined, (e) => console.error("Table Display 2 error", e));
+
+// beside animal table
+gltfLoader.load('./plant_1.glb', (gltf) => {
+    const plant = normalizeModel(gltf.scene, 3.5);
+    plant.traverse(c => { if(c.isMesh) { c.castShadow = true; c.receiveShadow = true; }});
+    plant.position.set(21, 0, -10.3);
+    scene.add(plant);
+}, undefined, (e) => console.error("Plant beside table 2 error", e));
+
+gltfLoader.load('./bird_merak.glb', (gltf) => {
+    const bird = normalizeModel(gltf.scene, 1.5);
+    bird.traverse(c => { if(c.isMesh) { c.castShadow = true; c.receiveShadow = true; }});
+    bird.position.set(21, 1.5, -4); 
+    bird.rotation.y = Math.PI;
+    scene.add(bird);
+}, undefined, (e) => console.error("Bird Merak error", e));
+
+gltfLoader.load('./komodo.glb', (gltf) => {
+    const komodo = normalizeModel(gltf.scene, 1.0);
+    komodo.traverse(c => { if(c.isMesh) { c.castShadow = true; c.receiveShadow = true; }});
+    komodo.position.set(21, 2.55, -2.1); 
+    komodo.rotation.y = Math.PI;
+    scene.add(komodo);
+}, undefined, (e) => console.error("Komodo error", e));
+
+gltfLoader.load('./rhino.glb', (gltf) => {
+    const rhino = normalizeModel(gltf.scene, 0.9);
+    rhino.traverse(c => { if(c.isMesh) { c.castShadow = true; c.receiveShadow = true; }});
+    rhino.position.set(21, 1.2, -6.45); 
+    rhino.rotation.y = Math.PI;
+    scene.add(rhino);
+}, undefined, (e) => console.error("Rhino error", e));
+
+gltfLoader.load('./tiger.glb', (gltf) => {
+    const tiger = normalizeModel(gltf.scene, 0.02);
+    tiger.traverse(c => { if(c.isMesh) { c.castShadow = true; c.receiveShadow = true; }});
+    tiger.position.set(21.2, 1.2, -8.9); 
+    tiger.rotation.y = Math.PI / 2;
+    scene.add(tiger);
+}, undefined, (e) => console.error("Tiger error", e));
+// --- INFO BOARD FOR ANIMALS ---
+function createTextTexture(title, text) {
+    const canvas = document.createElement('canvas');
+    canvas.width = 1024;
+    canvas.height = 512;
+    const ctx = canvas.getContext('2d');
+    
+    // Background
+    ctx.fillStyle = 'rgba(20, 20, 20, 0.9)';
+    ctx.fillRect(0, 0, 1024, 512);
+    
+    // Border
+    ctx.strokeStyle = '#7A4326';
+    ctx.lineWidth = 20;
+    ctx.strokeRect(10, 10, 1004, 492);
+
+    // Title
+    ctx.font = 'bold 60px "Segoe UI", sans-serif';
+    ctx.fillStyle = '#ffd700';
+    ctx.textAlign = 'center';
+    ctx.fillText(title, 512, 100);
+
+    // Text
+    ctx.font = '40px "Segoe UI", sans-serif';
+    ctx.fillStyle = '#ffffff';
+    ctx.textAlign = 'center';
+    const lines = text.split('\n');
+    let y = 200;
+    lines.forEach(line => {
+        ctx.fillText(line, 512, y);
+        y += 60;
+    });
+
+    return new THREE.CanvasTexture(canvas);
+}
+
+const animalInfoTexture = createTextTexture(
+    "SATWA NUSANTARA", 
+    "Koleksi Hewan Endemik Indonesia:\nKomodo (Varanus komodoensis)\nBadak Jawa (Rhinoceros sondaicus)\nHarimau Sumatera (Panthera tigris sumatrae)\nBurung Merak (Pavo muticus)"
+);
+const animalInfoMaterial = new THREE.MeshBasicMaterial({ map: animalInfoTexture, transparent: true, fog: false });
+const animalInfoGeometry = new THREE.PlaneGeometry(4, 2);
+const animalInfoMesh = new THREE.Mesh(animalInfoGeometry, animalInfoMaterial);
+animalInfoMesh.position.set(21.7, 4.1, -5.2);
+animalInfoMesh.rotation.y = -Math.PI / 2;
+scene.add(animalInfoMesh);
+
+const InfoKel = createTextTexture(
+    "Anggota Kelompok", 
+    "Hans Sanjaya Yantono - 5025231034\nDarryl Matthew Wibawa - 5025231047\nAyesha Nayla Satio - 5025231195"
+);
+const InfoKelMaterial = new THREE.MeshBasicMaterial({ map: InfoKel, transparent: true, fog: false });
+const InfoKelGeometry = new THREE.PlaneGeometry(4, 2);
+const InfoKelMesh = new THREE.Mesh(InfoKelGeometry, InfoKelMaterial);
+InfoKelMesh.position.set(10, 3.5, 28);
+InfoKelMesh.rotation.y = -Math.PI;
+scene.add(InfoKelMesh);
+
+const InfoKel2 = createTextTexture(
+    "Anggota Kelompok", 
+    "Hans Sanjaya Yantono - 5025231034\nDarryl Matthew Wibawa - 5025231047\nAyesha Nayla Satio - 5025231195"
+);
+const InfoKelMaterial2 = new THREE.MeshBasicMaterial({ map: InfoKel2, transparent: true, fog: false });
+const InfoKelGeometry2 = new THREE.PlaneGeometry(4, 2);
+const InfoKelMesh2 = new THREE.Mesh(InfoKelGeometry2, InfoKelMaterial2);
+InfoKelMesh2.position.set(-10, 3.5, 28);
+InfoKelMesh2.rotation.y = -Math.PI;
+scene.add(InfoKelMesh2);
+
+
+gltfLoader.load('./wayang_1.glb', (gltf) => {
+    const wayang1 = normalizeModel(gltf.scene, 3.5);
+    wayang1.traverse(c => { if(c.isMesh) { c.castShadow = true; c.receiveShadow = true; }});
+    wayang1.position.set(20, 3.1, 3);
+    wayang1.rotation.y = Math.PI;
+    scene.add(wayang1);
+});
+
+gltfLoader.load('./wayang_2.glb', (gltf) => {
+    const wayang2 = normalizeModel(gltf.scene, 3.5);
+    wayang2.traverse(c => { if(c.isMesh) { c.castShadow = true; c.receiveShadow = true; }});
+    wayang2.position.set(20, 2.8, 6);
+    wayang2.rotation.y = -Math.PI / 2;
+    scene.add(wayang2);
+});
+
+gltfLoader.load('./wayang_3.glb', (gltf) => {
+    const wayang3 = normalizeModel(gltf.scene, 3.5);
+    wayang3.traverse(c => { if(c.isMesh) { c.castShadow = true; c.receiveShadow = true; }});
+    wayang3.position.set(20, 4, 9);
+    wayang3.rotation.y = -Math.PI / 2;
+    scene.add(wayang3);
+});
+
+// F. KOLINTANG
+const kolintangPitches = [];
+for (let i = 0; i < 16; i++) { kolintangPitches.push(200 + (i * 100)); }
+const kolintangConfig = [
+    { fileName: 'kolintangtable.glb', x: 9, y: 0.4, z: -9, scale: [1.5, 1.5, 1.4], type: 'static' },
+    { fileName: 'kolintangbeat.glb', x: 10, y: 0.63, z: -9, scale: [1.5, 1.5, 1.5], type: 'static' }
+];
+
+const jumlahNada = 16; const gap = 0.08; const shrink = 0.02; 
+const startX = 9.52 - ((jumlahNada * gap) / 2) + 0.5;
+
+for (let i = 0; i < jumlahNada; i++) {
+    const currentX = startX + (i * gap);
+    const scaleLength = 1.5 * (1 - (i * shrink)); 
+    kolintangConfig.push({
+        fileName: 'kolintangblock.glb', x: currentX, y: 0.64, z: -9,      
+        scale: [scaleLength, 1.5, 1.5], type: 'instrument', soundName: 'kolintang', pitch: kolintangPitches[i]  
+    });
+    kolintangConfig.push({ fileName: 'kolintangtacks.glb', x: currentX + 1.14, y: 0.67, z: -9, scale: [1.5, 1.5, 1.5], type: 'static' });
+}
+kolintangConfig.push({ fileName: 'kolintangtacks.glb', x: startX + (jumlahNada * gap) + 1.14, y: 0.67, z: -9, scale: [1.5, 1.5, 1.5], type: 'static' });
+
+kolintangConfig.forEach((item) => {
+    gltfLoader.load(`./${item.fileName}`, (gltf) => {
+        const model = gltf.scene;
+        model.position.set(item.x, item.y, item.z);
+        model.rotation.y = -Math.PI / 2; 
+        if (Array.isArray(item.scale)) model.scale.set(item.scale[0], item.scale[1], item.scale[2]);
+        else model.scale.setScalar(item.scale);
+
+        if (item.type === 'instrument') {
+            model.userData = {
+                type: 'instrument', soundName: item.soundName, pitch: item.pitch,
+                originalScale: model.scale.clone(), animTimeout: null
+            };
+            instruments.kolintang.push(model);
+            instruments.kolintang.sort((a, b) => a.position.x - b.position.x);
+        }
+        model.traverse(c => { if(c.isMesh) { c.castShadow = true; c.receiveShadow = true; }});
+        scene.add(model);
+    }, undefined, (e) => console.error(`Error ${item.fileName}`, e));
+});
+
+// MORE PAINTINGS & STATUES (Tidak ada perubahan di bagian ini)
+gltfLoader.load('./painting_1.glb', (gltf) => {
+    const painting = normalizeModel(gltf.scene, 3.6);
+    painting.position.set(0, 7, -18.8); 
+    painting.traverse(c => { if(c.isMesh) { c.castShadow = true; c.receiveShadow = true; }});
+    scene.add(painting);
+});
+
+gltfLoader.load('./painting_2.glb', (gltf) => {
+    const painting = normalizeModel(gltf.scene, 3.5);
+    painting.position.set(0, -5.4, -31.2); 
+    painting.traverse(c => { if(c.isMesh) { c.castShadow = true; c.receiveShadow = true; }});
+    scene.add(painting);
+});
+
+gltfLoader.load('./painting_3.glb', (gltf) => {
+    const painting = normalizeModel(gltf.scene, 3.6);
+    painting.position.set(-18, 3.4, -18.8); 
+    painting.traverse(c => { if(c.isMesh) { c.castShadow = true; c.receiveShadow = true; }});
+    scene.add(painting);
+});
+
+gltfLoader.load('./painting_4.glb', (gltf) => {
+    const painting = normalizeModel(gltf.scene, 3.6);
+    painting.position.set(18, 3.2, -18.8); 
+    painting.traverse(c => { if(c.isMesh) { c.castShadow = true; c.receiveShadow = true; }});
+    scene.add(painting);
+});
+
+gltfLoader.load('./art_1.glb', (gltf) => {
+    const art = normalizeModel(gltf.scene, 3);
+    art.position.set(0, -0.1, -18.3); 
+    art.rotation.y = Math.PI / 2;
+    art.traverse(c => { if(c.isMesh) { c.castShadow = true; c.receiveShadow = true; }});
+    scene.add(art);
+});
+
+gltfLoader.load('./flower_1.glb', (gltf) => {
+    const flower = normalizeModel(gltf.scene, 2.5);
+    flower.traverse(c => { if(c.isMesh) { c.castShadow = true; c.receiveShadow = true; }});
+    flower.position.set(-12.9, -0.1, -18.1);
+    scene.add(flower);
+});
+
+gltfLoader.load('./flower_1.glb', (gltf) => {
+    const flower = normalizeModel(gltf.scene, 2.5);
+    flower.traverse(c => { if(c.isMesh) { c.castShadow = true; c.receiveShadow = true; }});
+    flower.position.set(13.1, -0.1, -18.1);
+    scene.add(flower);
+});
+
+gltfLoader.load('./patung_1.glb', (gltf) => {
+    const art = normalizeModel(gltf.scene, 3);
+    art.position.set(-20, -0.35, 5.1); 
+    art.rotation.y = Math.PI / 2;
+    art.traverse(c => { if(c.isMesh) { c.castShadow = true; c.receiveShadow = true; }});
+    scene.add(art);
+});
+
+gltfLoader.load('./plant_1.glb', (gltf) => {
+    const plant = normalizeModel(gltf.scene, 4.5);
+    plant.traverse(c => { if(c.isMesh) { c.castShadow = true; c.receiveShadow = true; }});
+    plant.position.set(-20.9, 0, 8.5);
+    scene.add(plant);
+});
+
+gltfLoader.load('./plant_1.glb', (gltf) => {
+    const plant = normalizeModel(gltf.scene, 4.5);
+    plant.traverse(c => { if(c.isMesh) { c.castShadow = true; c.receiveShadow = true; }});
+    plant.position.set(21, 0, 1);
+    scene.add(plant);
+});
+
+gltfLoader.load('./plant_2.glb', (gltf) => {
+    const plant = normalizeModel(gltf.scene, 2);
+    plant.traverse(c => { if(c.isMesh) { c.castShadow = true; c.receiveShadow = true; }});
+    plant.position.set(-21, 0, 0.4);
+    scene.add(plant);
+});
+
+gltfLoader.load('./patung_bali_1.glb', (gltf) => {
+    const patungBali1 = normalizeModel(gltf.scene, 3);
+    patungBali1.traverse(c => { if(c.isMesh) { c.castShadow = true; c.receiveShadow = true; }});
+    patungBali1.position.set(-19.7, 0.6, -5);
+    patungBali1.rotation.y = Math.PI / 2;
+    scene.add(patungBali1);
+});
+
+gltfLoader.load('./patung_bali_2.glb', (gltf) => {
+    const patungBali2 = normalizeModel(gltf.scene, 2.5);
+    patungBali2.traverse(c => { if(c.isMesh) { c.castShadow = true; c.receiveShadow = true; }});
+    patungBali2.position.set(-18.9, 1.3, -8);
+    patungBali2.rotation.y = Math.PI / 2;
+    scene.add(patungBali2);
+});
+
+gltfLoader.load('./patung_bali_3.glb', (gltf) => {
+    const patungBali3 = normalizeModel(gltf.scene, 3);
+    patungBali3.traverse(c => { if(c.isMesh) { c.castShadow = true; c.receiveShadow = true; }});
+    patungBali3.position.set(-19.3, 0.9, -2.4);
+    patungBali3.rotation.y = Math.PI / 2;
+    scene.add(patungBali3);
+});
+
+gltfLoader.load('./plant_1.glb', (gltf) => {
+    const plant = normalizeModel(gltf.scene, 3);
+    plant.traverse(c => { if(c.isMesh) { c.castShadow = true; c.receiveShadow = true; }});
+    plant.position.set(-21, 0, -9.4);
+    scene.add(plant);
+});
+
+gltfLoader.load('./plant_1.glb', (gltf) => {
+    const plant = normalizeModel(gltf.scene, 4);
+    plant.traverse(c => { if(c.isMesh) { c.castShadow = true; c.receiveShadow = true; }});
+    plant.position.set(-21, 0, 14);
+    scene.add(plant);
+});
+
+gltfLoader.load('./plant_1.glb', (gltf) => {
+    const plant = normalizeModel(gltf.scene, 2);
+    plant.traverse(c => { if(c.isMesh) { c.castShadow = true; c.receiveShadow = true; }});
+    plant.position.set(-21, 0, 17);
+    scene.add(plant);
+});
+
+gltfLoader.load('./plant_1.glb', (gltf) => {
+    const plant = normalizeModel(gltf.scene, 3);
+    plant.traverse(c => { if(c.isMesh) { c.castShadow = true; c.receiveShadow = true; }});
+    plant.position.set(-21, 0, 20);
+    scene.add(plant);
+});
+
+gltfLoader.load('./plant_1.glb', (gltf) => {
+    const plant = normalizeModel(gltf.scene, 3);
+    plant.traverse(c => { if(c.isMesh) { c.castShadow = true; c.receiveShadow = true; }});
+    plant.position.set(21, 0, 27.5);
+    scene.add(plant);
+});
+
+gltfLoader.load('./indonesia.glb', (gltf) => {
+    const indonesia = normalizeModel(gltf.scene, 3.5);
+    indonesia.position.set(21.93, 4, 20); 
+    indonesia.rotation.z = Math.PI / 2;
+    indonesia.rotation.x = Math.PI / 2;
+    
+    indonesia.traverse(c => { if(c.isMesh) { c.castShadow = true; c.receiveShadow = true; }});
+    scene.add(indonesia);
+});
+
+gltfLoader.load('./indonesian_traditional_cake.glb', (gltf) => {
+    const cake = normalizeModel(gltf.scene, 0.75);
+    cake.position.set(-20.5, 2.2, 25); 
+    cake.rotation.z = -Math.PI / 3;
+    cake.rotation.x = -Math.PI / 3;
+    cake.traverse(c => { if(c.isMesh) { c.castShadow = true; c.receiveShadow = true; }});
+    scene.add(cake);
+});
+
+// CHANDELIERS
+gltfLoader.load('./chandelier_2.glb', (gltf) => {
+    const originalChandelier = normalizeModel(gltf.scene, 3); 
+    const chandelierPositions = [
+        { x: -10.5, y: -2.7, z: 5 },
+        { x: -10.5, y: -2.7, z: -5 },
+        { x: -10.5, y: -2.7, z: -15 },
+        { x: -10.5, y: -2.7, z: -25 },
+        { x: -10.5, y: -2.7, z: -35 }
+    ];
+    chandelierPositions.forEach(pos => {
+        const chandelier = originalChandelier.clone();
+        chandelier.position.set(pos.x, pos.y, pos.z);
+        chandelier.traverse(c => { if(c.isMesh) { c.castShadow = true; c.receiveShadow = true; }});
+        scene.add(chandelier);
+    });
+}, undefined, (e) => console.error("Chandelier error", e));
+
+// --- 4. AUDIO SYSTEM ---
+const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+const soundBuffers = {};
+async function loadSoundFile(name, url) {
+    try {
+        const response = await fetch(url);
+        const arrayBuffer = await response.arrayBuffer();
+        soundBuffers[name] = await audioCtx.decodeAudioData(arrayBuffer);
+    } catch (err) { console.warn(`Error loading ${url}`, err); }
+}
+async function initAudio() {
+    await loadSoundFile('angklung', './Angklung.MP3');
+    await loadSoundFile('gong', './gong.mp3');
+    await loadSoundFile('kolintang', './kulintang.MP3');
+    await loadSoundFile('bonang', './bonang.mp3');
+    await loadSoundFile('kecapi', './kecapi.MP3');
+    await loadSoundFile('rebab', './rebab.mp3');
+}
+
+function playSound(name, pitchCents) {
+    if (audioCtx.state === 'suspended') audioCtx.resume();
+    let buffer = soundBuffers[name];
+    if (!buffer) return;
+    const source = audioCtx.createBufferSource();
+    source.buffer = buffer;
+    source.detune.value = pitchCents; 
+    const gainNode = audioCtx.createGain();
+    gainNode.gain.value = name === 'gong' ? 2.0 : (name === 'bonang' ? 1.6 : (name === 'kolintang' ? 1.2 : (name === 'rebab' ? 1.5 : 0.8)));
+    source.connect(gainNode); gainNode.connect(audioCtx.destination);
+    source.start(0);
+}
+
+// --- FUNGSI TRIGGER INSTRUMENT ---
+function triggerInstrument(obj, pitchOverride) {
+    if (!obj || !obj.userData || obj.userData.type !== 'instrument') return;
+
+    // 1. Mainkan Suara
+    const pitch = (typeof pitchOverride === 'number') ? pitchOverride : (obj.userData.pitch || 0);
+    playSound(obj.userData.soundName, pitch);
+
+    // 2. Animasi Visual
+    if (obj.userData.soundName === 'bonang') {
+        // Karena Bonang terdiri dari banyak Mesh, animasikan hanya yang disentuh
+        if (obj.userData.animTimeout) clearTimeout(obj.userData.animTimeout);
+        obj.position.y = obj.userData.originalY + 0.3;
+        obj.userData.animTimeout = setTimeout(() => {
+            obj.position.y = obj.userData.originalY;
+            obj.userData.animTimeout = null;
+        }, 150);
+    } else {
+        // Animation Scale (Angklung, Gong, Kecapi, Rebab, Kolintang)
+        if (obj.userData.originalScale) {
+            if (obj.userData.animTimeout) clearTimeout(obj.userData.animTimeout);
+            obj.scale.copy(obj.userData.originalScale);
+            obj.scale.multiplyScalar(1.05); // Sedikit membesar
+            obj.userData.animTimeout = setTimeout(() => {
+                obj.scale.copy(obj.userData.originalScale);
+                obj.userData.animTimeout = null;
+            }, 150);
+        }
+    }
+}
+
+// --- 5. LOGIKA INFORMASI & PROXIMITY ---
+const infoPanel = document.getElementById('info-panel');
+const infoTitle = document.getElementById('info-title');
+const infoDesc = document.getElementById('info-desc');
+const actionPrompt = document.getElementById('action-prompt');
+const controlsHint = document.getElementById('controls-hint');
+const modeIndicator = document.getElementById('mode-indicator');
+const crosshair = document.getElementById('crosshair');
+
+// Tambahkan elemen untuk Tab Playback
+const tabActionPrompt = document.createElement('div');
+tabActionPrompt.id = 'tab-action-prompt';
+tabActionPrompt.innerHTML = 'TEKAN <kbd>TAB</kbd> UNTUK MAIN "GUNDHUL PACUL"';
+tabActionPrompt.style.marginTop = '10px';
+tabActionPrompt.style.padding = '10px';
+tabActionPrompt.style.background = 'rgba(139, 69, 19, 0.5)';
+tabActionPrompt.style.border = '1px solid #d4a574';
+tabActionPrompt.style.color = '#d4a574';
+tabActionPrompt.style.fontWeight = 'bold';
+tabActionPrompt.style.display = 'none';
+tabActionPrompt.style.borderRadius = '4px';
+infoPanel.appendChild(tabActionPrompt);
+
+
+const instrumentInfo = {
+    angklung: {
+        title: "Angklung", target: new THREE.Vector3(-10, 0, -9), threshold: 6.0,
+        desc: "Alat musik bambu dari Jawa Barat. Digoyangkan untuk menghasilkan nada."
+    },
+    gong: {
+        title: "Gong Ageng", target: new THREE.Vector3(10, 0, 1), threshold: 5.0,
+        desc: "Instrumen terbesar dalam gamelan Jawa. Penanda awal dan akhir gending."
+    },
+    kolintang: {
+        title: "Kolintang", target: new THREE.Vector3(9, 0, -9), threshold: 5.0,
+        desc: "Alat musik pukul kayu dari Minahasa, Sulawesi Utara."
+    },
+    bonang: {
+        title: "Bonang", target: new THREE.Vector3(-10, 0, 2), threshold: 4.0,
+        desc: "Alat musik tradisional Jawa terdiri dari gong kecil yang disusun di atas bingkai."
+    },
+    kecapi: {
+        title: "Kecapi", target: new THREE.Vector3(9.5, 0, 11), threshold: 5.0, 
+        desc: "Alat musik petik tradisional Sunda. Tekan tombol untuk memetik senar dan menghasilkan melodi."
+    },
+    rebab: {
+        title: "Rebab", target: new THREE.Vector3(-9.9, 0, 11), threshold: 5.0, 
+        desc: "Alat musik gesek tradisional Indonesia. Tekan tombol untuk memainkan melodi."
+    }
+};
+
+function checkProximity() {
+    if (isPerforming || isPlayingGundhulPacul) {
+        // Sembunyikan semua prompt saat Performing atau Playing
+        infoPanel.style.opacity = 0;
+        return;
+    }
+
+    let found = false;
+    for (const [key, data] of Object.entries(instrumentInfo)) {
+        const dist = Math.sqrt(Math.pow(camera.position.x - data.target.x, 2) + Math.pow(camera.position.z - data.target.z, 2));
+        if (dist < data.threshold) {
+            infoTitle.innerText = data.title;
+            infoDesc.innerText = data.desc;
+            infoPanel.style.opacity = 1;
+            actionPrompt.style.opacity = 1; 
+            tabActionPrompt.style.display = 'block'; // Tampilkan prompt TAB
+            infoPanel.style.borderLeftColor = "#ffd700";
+            activeInstrumentName = key;
+            found = true;
+            break; 
+        }
+    }
+    if (!found) {
+        infoPanel.style.opacity = 0;
+        tabActionPrompt.style.display = 'none'; // Sembunyikan prompt TAB
+        activeInstrumentName = null;
+    }
+}
+
+// --- 6. INTERACTION & CONTROLS ---
+const controls = new PointerLockControls(camera, document.body);
+const overlay = document.getElementById('overlay');
+const enterBtn = document.getElementById('enter-btn');
+
+// Show overlay on load
+overlay.style.display = 'flex';
+
+// Handle Enter Button Click
+enterBtn.addEventListener('click', async (e) => {
+    e.stopPropagation();
+    await initAudio();
+    overlay.style.opacity = '0';
+    setTimeout(() => {
+        overlay.style.display = 'none';
+        controls.lock();
+    }, 800);
+});
+
+// Handle clicking anywhere on overlay (except button)
+overlay.addEventListener('click', async (e) => {
+    if (e.target === enterBtn) return;
+    await initAudio();
+    overlay.style.opacity = '0';
+    setTimeout(() => {
+        overlay.style.display = 'none';
+        controls.lock();
+    }, 800);
+});
+
+window.addEventListener('load', () => {
+    document.body.style.cursor = 'pointer';
+});
+
+controls.addEventListener('lock', () => {
+    document.body.style.cursor = 'none';
+    overlay.style.display = 'none';
+});
+
+controls.addEventListener('unlock', () => {
+    isPerforming = false;
+    isPlayingGundhulPacul = false;
+    if(playbackTimeout) clearTimeout(playbackTimeout);
+    modeIndicator.style.display = 'none';
+    controlsHint.style.display = 'none';
+    crosshair.classList.remove('crosshair-active');
+    // Show overlay again when unlocked
+    overlay.style.display = 'flex';
+    overlay.style.opacity = '1';
+    document.body.style.cursor = 'pointer';
+});
+
+const raycaster = new THREE.Raycaster();
+const center = new THREE.Vector2(0, 0);
+
+document.addEventListener('mousedown', () => {
+    if (!controls.isLocked || isPerforming || isPlayingGundhulPacul) return;
+    raycaster.setFromCamera(center, camera);
+    const intersects = raycaster.intersectObjects(scene.children, true);
+    if (intersects.length > 0) {
+        let obj = intersects[0].object;
+        while(obj.parent && (!obj.userData || !obj.userData.type)) { obj = obj.parent; }
+        triggerInstrument(obj);
+    }
+});
+
+const keyMap = {
+    'KeyZ': 0, 'KeyX': 1, 'KeyC': 2, 'KeyV': 3, 'KeyB': 4, 'KeyN': 5, 'KeyM': 6,
+    'KeyA': 7, 'KeyS': 8, 'KeyD': 9, 'KeyF': 10, 'KeyG': 11, 'KeyH': 12, 'KeyJ': 13, 'KeyK': 14, 'KeyL': 15,
+    'KeyQ': 16, 'KeyW': 17, 'KeyE': 18, 'KeyR': 19, 'KeyT': 20, 'KeyY': 21, 'KeyU': 22, 'KeyI': 23, 'KeyO': 24, 'KeyP': 25
+};
+
+const move = { w: false, a: false, s: false, d: false };
+
+// --- LOGIKA PLAYBACK GUNDHUL PACUL ---
+
+// Notasi Angka Gundhul Pacul (Do=C, 4/4 Moderato)
+// Nada: 1=C, 2=D, 3=E, 4=F, 5=G, 6=A, 7=B
+// Dot atas: +1200 cents (satu oktaf lebih tinggi)
+// Notasi diubah menjadi array objek: { note: number (1-7), octaveShift: number (0=normal, 1=tinggi), duration: number (ketukan) }
+// 1 ketukan = 400ms (Moderato 4/4)
+
+const tempo = 300; // ms per ketukan (moderato)
+
+const gundhulPaculNotation = [
+    // Bar 1
+    { note: 1, octaveShift: 0, duration: 1 }, { note: 3, octaveShift: 0, duration: 2 }, { note: 1, octaveShift: 0, duration: 1 }, { note: 3, octaveShift: 0, duration: 1 }, { note: 4, octaveShift: 0, duration: 1 }, 
+    // Bar 2
+    { note: 5, octaveShift: 0, duration: 1 }, { note: 5, octaveShift: 0, duration: 1 }, { note: 0, octaveShift: 0, duration: 1.5 }, { note: 7, octaveShift: 0, duration: 1 }, 
+    // Bar 3
+    { note: 1, octaveShift: 1, duration: 1 }, { note: 7, octaveShift: 0, duration: 1 }, { note: 1, octaveShift: 1, duration: 1 }, { note: 7, octaveShift: 0, duration: 1 }, { note: 5, octaveShift: 0, duration: 1 },
+    // Bar 4
+    { note: 0, octaveShift: 0, duration: 1.5 }, { note: 1, octaveShift: 0, duration: 1 }, // Note 1 di bar 4
+    // Bar 5
+    { note: 3, octaveShift: 0, duration: 2 }, { note: 1, octaveShift: 0, duration: 1 }, { note: 3, octaveShift: 0, duration: 1 }, { note: 4, octaveShift: 0, duration: 1 },
+    // Bar 6
+    { note: 5, octaveShift: 0, duration: 2 }, { note: 5, octaveShift: 0, duration: 1 }, { note: 0, octaveShift: 0, duration: 1.5 }, { note: 7, octaveShift: 0, duration: 1 }, 
+    // Bar 7
+    { note: 1, octaveShift: 1, duration: 1 }, { note: 7, octaveShift: 0, duration: 1 }, { note: 1, octaveShift: 1, duration: 1 }, { note: 7, octaveShift: 0, duration: 1 }, { note: 5, octaveShift: 0, duration: 2 },
+    // Bar 8
+    { note: 1, octaveShift: 0, duration: 2 },
+    // Bar 9
+    { note: 3, octaveShift: 0, duration: 2 }, { note: 5, octaveShift: 0, duration: 2 }, { note: 4, octaveShift: 0, duration: 1 }, { note: 4, octaveShift: 0, duration: 1 },
+    // Bar 10
+    { note: 5, octaveShift: 0, duration: 1 }, { note: 4, octaveShift: 0, duration: 1 },
+    // Bar 11
+    { note: 3, octaveShift: 0, duration: 1 }, { note: 1, octaveShift: 0, duration: 1 }, { note: 4, octaveShift: 0, duration: 1 }, { note: 3, octaveShift: 0, duration: 1 }, { note: 1, octaveShift: 0, duration: 2 },
+    // Bar 12
+    { note: 0, octaveShift: 0, duration: 2 }, { note: 1, octaveShift: 0, duration: 3 },
+    // Bar 13
+    { note: 3, octaveShift: 0, duration: 2 }, { note: 5, octaveShift: 0, duration: 2 }, { note: 4, octaveShift: 0, duration: 1 }, { note: 4, octaveShift: 0, duration: 1 },
+    // Bar 14
+    { note: 5, octaveShift: 0, duration: 1 }, { note: 4, octaveShift: 0, duration: 1 },
+    // Bar 15
+    { note: 3, octaveShift: 0, duration: 1 }, { note: 1, octaveShift: 0, duration: 1 }, { note: 4, octaveShift: 0, duration: 1 }, { note: 3, octaveShift: 0, duration: 1 }, { note: 1, octaveShift: 0, duration: 2 }, // Stop
+];
+
+// Base pitch (C4 = 0 cents)
+const basePitches = {
+    1: 0,     // C
+    2: 200,   // D
+    3: 400,   // E
+    4: 500,   // F
+    5: 700,   // G
+    6: 900,   // A
+    7: 1100,   // B
+};
+
+function playGundhulPacul(instrumentName) {
+    if (isPlayingGundhulPacul) return; // Mencegah multiple playback
+    isPlayingGundhulPacul = true;
+    modeIndicator.innerText = `♫ ${instrumentName.toUpperCase()} - GUNDHUL PACUL ♫\nTekan TAB untuk Henti`;
+    modeIndicator.style.display = 'block';
+
+    let noteIndex = 0;
+    let currentDelay = 0;
+    
+    // Fungsi rekursif untuk memainkan notasi
+    const playNextNote = () => {
+        if (!isPlayingGundhulPacul || noteIndex >= gundhulPaculNotation.length) {
+            isPlayingGundhulPacul = false;
+            modeIndicator.style.display = 'none';
+            checkProximity(); // Refresh UI setelah selesai
+            return;
+        }
+
+        const noteData = gundhulPaculNotation[noteIndex];
+        const durationMs = noteData.duration * tempo;
+        
+        if (noteData.note !== 0) { // Cek apakah ini bukan notasi diam (rest)
+            const basePitch = basePitches[noteData.note];
+            const pitchCents = basePitch + (noteData.octaveShift * 1200);
+            
+            // Logika untuk memilih objek yang tepat, terutama Bonang dan Angklung
+            let targetObject = null;
+            if (instrumentName === 'gong' || instrumentName === 'kecapi' || instrumentName === 'rebab') {
+                // Untuk instrumen 1 model (Gong, Kecapi, Rebab), gunakan objek pertama
+                targetObject = instruments[instrumentName][0];
+            } else if (instrumentName === 'angklung') {
+                // Angklung: menggunakan pitch semitone (0, 2, 4, 5, 7, 9, 11, 12)
+                const angklungPitches = [0, 200, 400, 500, 700, 900, 1100, 1200];
+                const targetPitch = pitchCents % 1200; // Hanya perlu base pitch (C4 - B4)
+                const closestPitchIndex = angklungPitches.map(p => Math.abs(p - targetPitch)).indexOf(Math.min(...angklungPitches.map(p => Math.abs(p - targetPitch))));
+                targetObject = instruments.angklung[closestPitchIndex];
+            } else if (instrumentName === 'bonang') {
+                // Bonang: Menggunakan 8 pot, mapping notasi angka ke pot Bonang
+                const bonangNotes = [1, 2, 3, 4, 5, 6, 7, 1]; // Asumsi 8 pot dari 1-7 kembali ke 1
+                const mapIndex = (noteData.note - 1) % instruments.bonang.length; // 1 -> 0, 2 -> 1, dst.
+                targetObject = instruments.bonang[mapIndex];
+            } else if (instrumentName === 'kolintang') {
+                 // Kolintang: 16 blok, mapping 1-7 ke range yang sesuai (misalnya 7 blok pertama)
+                const kolintangMapIndex = (noteData.note - 1) % 7; 
+                targetObject = instruments.kolintang[kolintangMapIndex];
+            }
+
+            if (targetObject) {
+                // Pitch untuk Angklung, Kecapi, Rebab di-handle di sini karena pitch instrument beda-beda
+                if (instrumentName === 'angklung' || instrumentName === 'kecapi' || instrumentName === 'rebab') {
+                     triggerInstrument(targetObject, pitchCents);
+                } else {
+                     // Bonang/Kolintang/Gong, biarkan triggerInstrument pakai pitch default atau pitchCents
+                     // Bonang/Kolintang: pitchCents adalah 100 * index. Gunakan pitch semitone dari notasi.
+                     triggerInstrument(targetObject, pitchCents);
+                }
+            }
+        }
+        
+        noteIndex++;
+        playbackTimeout = setTimeout(playNextNote, durationMs);
+    };
+
+    playNextNote(); // Mulai pemutaran
+}
+
+
+document.addEventListener('keydown', (e) => {
+    if (!controls.isLocked) return;
+
+    if (e.key === 'Control') {
+        if (activeInstrumentName) {
+            if (isPlayingGundhulPacul) return; // Abaikan CTRL saat lagu dimainkan
+            
+            isPerforming = !isPerforming; 
+            if (isPerforming) {
+                modeIndicator.innerText = `♫ PERFORMING MODE - ${activeInstrumentName.toUpperCase()} ♫\nTekan CTRL untuk Keluar`;
+                modeIndicator.style.display = 'block';
+                controlsHint.style.display = 'block';
+                actionPrompt.style.opacity = 0;
+                crosshair.classList.add('crosshair-active');
+                tabActionPrompt.style.display = 'none'; // Sembunyikan prompt TAB
+                move.w = false; move.a = false; move.s = false; move.d = false;
+            } else {
+                modeIndicator.style.display = 'none';
+                controlsHint.style.display = 'none';
+                actionPrompt.style.opacity = 1; 
+                tabActionPrompt.style.display = 'block'; // Tampilkan lagi prompt TAB
+                crosshair.classList.remove('crosshair-active');
+            }
+        }
+        return; 
+    }
+    
+    // Logika Playback Otomatis
+    if (e.code === 'Tab' && activeInstrumentName) {
+        e.preventDefault(); 
+        if (isPlayingGundhulPacul) {
+            // Stop Playback
+            isPlayingGundhulPacul = false;
+            if (playbackTimeout) clearTimeout(playbackTimeout);
+            modeIndicator.style.display = 'none';
+            checkProximity(); // Tampilkan UI normal
+            return;
+        } else if (!isPerforming) {
+            // Start Playback
+            playGundhulPacul(activeInstrumentName);
+            return;
+        }
+    }
+
+
+    if (isPerforming && !isPlayingGundhulPacul) {
+        if (keyMap.hasOwnProperty(e.code) && activeInstrumentName) {
+            const noteIndex = keyMap[e.code];
+            const targetArray = instruments[activeInstrumentName];
+            
+            if (targetArray && targetArray.length > 0) {
+                if (activeInstrumentName === 'bonang') {
+                    const pieceIndex = noteIndex % targetArray.length;
+                    const piece = targetArray[pieceIndex];
+                    if (piece) triggerInstrument(piece);
+                
+                } else if (activeInstrumentName === 'gong') {
+                    triggerInstrument(targetArray[0]);
+
+                } else if (activeInstrumentName === 'kecapi') {
+                    const pitchShift = noteIndex * 100;
+                    triggerInstrument(targetArray[0], pitchShift);
+
+                } else if (activeInstrumentName === 'rebab') {
+                    const pitchShift = noteIndex * 100;
+                    triggerInstrument(targetArray[0], pitchShift);
+
+                } else {
+                    if (targetArray[noteIndex]) triggerInstrument(targetArray[noteIndex]);
+                }
+            }
+        }
+        return; 
+    }
+
+    if (e.code === 'KeyW') move.w = true;
+    if (e.code === 'KeyA') move.a = true;
+    if (e.code === 'KeyS') move.s = true;
+    if (e.code === 'KeyD') move.d = true;
+});
+
+document.addEventListener('keyup', (e) => {
+    if (e.code === 'KeyW') move.w = false;
+    if (e.code === 'KeyA') move.a = false;
+    if (e.code === 'KeyS') move.s = false;
+    if (e.code === 'KeyD') move.d = false;
+});
+
+// --- 7. ANIMATION LOOP ---
+const velocity = new THREE.Vector3();
+const direction = new THREE.Vector3();
+const clock = new THREE.Clock();
+
+function animate() {
+    requestAnimationFrame(animate);
+
+    checkProximity(); 
+
+    if (controls.isLocked) {
+        const delta = clock.getDelta();
+
+        velocity.x -= velocity.x * 10.0 * delta; 
+        velocity.z -= velocity.z * 10.0 * delta;
+
+        direction.z = Number(move.w) - Number(move.s);
+        direction.x = Number(move.d) - Number(move.a);
+        direction.normalize();
+
+        if (move.w || move.s) velocity.z -= direction.z * 50.0 * delta;
+        if (move.a || move.d) velocity.x -= direction.x * 50.0 * delta;
+
+        controls.moveRight(-velocity.x * delta);
+        controls.moveForward(-velocity.z * delta);
+
+        raycaster.setFromCamera(new THREE.Vector2(0, 0), camera);
+        const intersects = raycaster.intersectObjects(scene.children, true);
+        
+        if (intersects.length > 0) {
+            const hitObj = intersects[0].object;
+
+            if (hitObj.userData && hitObj.userData.soundName === 'bonang') {
+                if (hoveredObject !== hitObj) {
+                    if (hoveredObject && hoveredObject.userData.originalY !== undefined) {
+                        hoveredObject.position.y = hoveredObject.userData.originalY;
+                    }
+                    hoveredObject = hitObj;
+                    if (!isPlayingGundhulPacul) {
+                         hoveredObject.position.y = hoveredObject.userData.originalY + 0.3;
+                    }
+                }
+            } else {
+                if (hoveredObject) {
+                    hoveredObject.position.y = hoveredObject.userData.originalY;
+                    hoveredObject = null;
+                }
+            }
+        } else {
+            if (hoveredObject) {
+                hoveredObject.position.y = hoveredObject.userData.originalY;
+                hoveredObject = null;
+            }
+        }
+    }
+    
+    renderer.render(scene, camera);
+}
+animate();
+
+window.addEventListener('resize', () => {
+    camera.aspect = window.innerWidth / window.innerHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(window.innerWidth, window.innerHeight);
+});
+
+    </script>
+</body>
+</html>
