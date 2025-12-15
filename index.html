@@ -372,27 +372,21 @@
 
             <div class="instrument-showcase">
                 <div class="instrument-item">
-                    <div class="instrument-icon">🎋</div>
                     <div class="instrument-name">Angklung</div>
                 </div>
                 <div class="instrument-item">
-                    <div class="instrument-icon">🔔</div>
                     <div class="instrument-name">Gong</div>
                 </div>
                 <div class="instrument-item">
-                    <div class="instrument-icon">🎵</div>
                     <div class="instrument-name">Kecapi</div>
                 </div>
                 <div class="instrument-item">
-                    <div class="instrument-icon">🎸</div>
                     <div class="instrument-name">Rebab</div>
                 </div>
                 <div class="instrument-item">
-                    <div class="instrument-icon">🛎️</div>
                     <div class="instrument-name">Bonang</div>
                 </div>
                 <div class="instrument-item">
-                    <div class="instrument-icon">🎹</div>
                     <div class="instrument-name">Kolintang</div>
                 </div>
             </div>
@@ -659,7 +653,7 @@ gltfLoader.load('./rebab.glb', (gltf) => {
 }, undefined, (e) => console.error("Rebab error", e));
 
 
-// DEKORASI & PAINTINGS (Tidak ada perubahan di bagian ini)
+// DEKORASI & PAINTINGS 
 gltfLoader.load('./bonsai.glb', (gltf) => {
     const bonsai = normalizeModel(gltf.scene, 3.1);
     bonsai.traverse(c => { if(c.isMesh) { c.castShadow = true; c.receiveShadow = true; }});
@@ -916,7 +910,8 @@ kolintangConfig.forEach((item) => {
     }, undefined, (e) => console.error(`Error ${item.fileName}`, e));
 });
 
-// MORE PAINTINGS & STATUES (Tidak ada perubahan di bagian ini)
+// MORE PAINTINGS & STATUES 
+
 gltfLoader.load('./painting_1.glb', (gltf) => {
     const painting = normalizeModel(gltf.scene, 3.6);
     painting.position.set(0, 7, -18.8); 
@@ -1207,9 +1202,12 @@ const instrumentInfo = {
 };
 
 function checkProximity() {
-    if (isPerforming || isPlayingGundhulPacul) {
-        // Sembunyikan semua prompt saat Performing atau Playing
+    if (isPlayingGundhulPacul) {
         infoPanel.style.opacity = 0;
+        return;
+    }
+    
+    if (isPerforming) {
         return;
     }
 
@@ -1444,7 +1442,8 @@ document.addEventListener('keydown', (e) => {
                 controlsHint.style.display = 'block';
                 actionPrompt.style.opacity = 0;
                 crosshair.classList.add('crosshair-active');
-                tabActionPrompt.style.display = 'none'; // Sembunyikan prompt TAB
+                tabActionPrompt.style.display = 'none'; 
+                infoPanel.style.opacity = 1; 
                 move.w = false; move.a = false; move.s = false; move.d = false;
             } else {
                 modeIndicator.style.display = 'none';
