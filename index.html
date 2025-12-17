@@ -346,13 +346,11 @@
     </div>
 
     <div id="overlay">
-        <!-- Corner Ornaments -->
         <div class="corner-ornament corner-top-left"></div>
         <div class="corner-ornament corner-top-right"></div>
         <div class="corner-ornament corner-bottom-left"></div>
         <div class="corner-ornament corner-bottom-right"></div>
 
-        <!-- Floating Particles -->
         <div class="particle" style="left: 10%; animation-delay: 0s;"></div>
         <div class="particle" style="left: 20%; animation-delay: 1s;"></div>
         <div class="particle" style="left: 30%; animation-delay: 2s;"></div>
@@ -363,7 +361,6 @@
         <div class="particle" style="left: 80%; animation-delay: 7s;"></div>
         <div class="particle" style="left: 90%; animation-delay: 0.5s;"></div>
 
-        <!-- Main Content -->
         <div id="home-screen">
             <h1 class="museum-title">MUSEUM NUSANTARA</h1>
             <p class="subtitle">Warisan Budaya Indonesia</p>
@@ -408,17 +405,22 @@
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { PointerLockControls } from 'three/addons/controls/PointerLockControls.js';
 
-// --- GLOBAL VARIABLES ---
+// variabel global
 const instruments = { angklung: [], kolintang: [], gong: [], bonang: [], kecapi: [], rebab: [] };
 let activeInstrumentName = null; 
 
-// STATUS MODE
+// status alatmusik
 let isPerforming = false;
 let hoveredObject = null;
-let isPlayingGundhulPacul = false; // Status baru untuk playback otomatis
-let playbackTimeout = null; // Untuk menghentikan playback
+let isPlayingGundhulPacul = false; 
+let playbackTimeout = null; 
 
-// --- 1. SETUP SCENE ---
+// variabel collision
+const collidableMeshList = []; 
+const collisionRaycaster = new THREE.Raycaster();
+collisionRaycaster.far = 1.5; 
+
+// set sceene
 const scene = new THREE.Scene();
 scene.background = new THREE.Color(0xcccccc);
 scene.fog = new THREE.Fog(0xcccccc, 10, 50);
@@ -434,7 +436,7 @@ renderer.toneMapping = THREE.ACESFilmicToneMapping;
 renderer.toneMappingExposure = 1.1;
 document.body.appendChild(renderer.domElement);
 
-// --- 2. LIGHTING ---
+// pencahayaan
 const hemiLight = new THREE.HemisphereLight(0xffffff, 0x444444, 1.5);
 hemiLight.position.set(0, 20, 0);
 scene.add(hemiLight);
@@ -445,7 +447,7 @@ dirLight.castShadow = true;
 dirLight.shadow.mapSize.set(2048, 2048);
 scene.add(dirLight);
 
-// --- 3. ASSET LOADER (Tidak ada perubahan di bagian ini) ---
+// asset loader
 const gltfLoader = new GLTFLoader();
 
 function normalizeModel(model, targetHeight) {
@@ -458,17 +460,28 @@ function normalizeModel(model, targetHeight) {
     return model;
 }
 
-// A. GALLERY
+// gedung pameran
 gltfLoader.load('./art_gallery.glb', (gltf) => {
     const building = gltf.scene;
-    building.traverse(c => { if(c.isMesh) { c.castShadow = true; c.receiveShadow = true; }});
+    building.traverse(c => { 
+        if(c.isMesh) { 
+            c.castShadow = true; 
+            c.receiveShadow = true; 
+            collidableMeshList.push(c);
+        }
+    });
     scene.add(building);
 }, undefined, (e) => console.error(e));
 
-// PATUNG ENTRANCE
 gltfLoader.load('./patung_enterance.glb', (gltf) => {
     const patung = normalizeModel(gltf.scene, 3.5);
-    patung.traverse(c => { if(c.isMesh) { c.castShadow = true; c.receiveShadow = true; }});
+    patung.traverse(c => { 
+        if(c.isMesh) { 
+            c.castShadow = true; 
+            c.receiveShadow = true; 
+            collidableMeshList.push(c);
+        }
+    });
     patung.position.set(-4, 0, 26);
     patung.rotation.y = Math.PI / 4; 
     scene.add(patung);
@@ -476,13 +489,19 @@ gltfLoader.load('./patung_enterance.glb', (gltf) => {
 
 gltfLoader.load('./patung_enterance.glb', (gltf) => {
     const patung = normalizeModel(gltf.scene, 3.5);
-    patung.traverse(c => { if(c.isMesh) { c.castShadow = true; c.receiveShadow = true; }});
+    patung.traverse(c => { 
+        if(c.isMesh) { 
+            c.castShadow = true; 
+            c.receiveShadow = true; 
+            collidableMeshList.push(c);
+        }
+    });
     patung.position.set(4, 0, 26.7);
     patung.rotation.y = -Math.PI / 4; 
     scene.add(patung);
 }, undefined, (e) => console.error("Patung Entrance Right error", e));
 
-// B. ANGKLUNG
+// A. ANGKLUNG
 const angklungNotes = [0, 2, 4, 5, 7, 9, 11, 12]; 
 gltfLoader.load('./angklung.glb', (gltf) => {
     const original = normalizeModel(gltf.scene, 2.0); 
@@ -498,6 +517,7 @@ gltfLoader.load('./angklung.glb', (gltf) => {
             type: 'instrument', soundName: 'angklung', pitch: semitone * 100,
             originalScale: angklung.scale.clone(), animTimeout: null
         };
+        angklung.traverse(c => { if(c.isMesh) collidableMeshList.push(c); });
         scene.add(angklung);
         instruments.angklung.push(angklung);
 
@@ -507,7 +527,7 @@ gltfLoader.load('./angklung.glb', (gltf) => {
     });
 });
 
-// C. GONG
+// B. GONG
 gltfLoader.load('./gong.glb', (gltf) => {
     const gong = normalizeModel(gltf.scene, 2.5); 
     gong.position.set(10, 0.5, 1); 
@@ -515,7 +535,13 @@ gltfLoader.load('./gong.glb', (gltf) => {
         type: 'instrument', soundName: 'gong', pitch: 0,
         originalScale: gong.scale.clone(), animTimeout: null
     };
-    gong.traverse(c => { if(c.isMesh) { c.castShadow = true; c.material.color = new THREE.Color(0xffd700); }});
+    gong.traverse(c => { 
+        if(c.isMesh) { 
+            c.castShadow = true; 
+            c.material.color = new THREE.Color(0xffd700); 
+            collidableMeshList.push(c);
+        }
+    });
     scene.add(gong);
     instruments.gong.push(gong);
     
@@ -523,7 +549,7 @@ gltfLoader.load('./gong.glb', (gltf) => {
     ped.position.set(10, 0.25, 1); scene.add(ped);
 }, undefined, (e) => console.error("Gong error", e));
 
-// D. BONANG 
+// C. BONANG 
 gltfLoader.load('./Bonang.glb', (gltf) => {
     const bonangGroup = normalizeModel(gltf.scene, 1.3);
     bonangGroup.position.set(-10, 0.25, 1);
@@ -532,6 +558,7 @@ gltfLoader.load('./Bonang.glb', (gltf) => {
         if (child.isMesh) {
             child.castShadow = true;
             child.receiveShadow = true;
+            collidableMeshList.push(child);
             if (child.name.includes("Kempyang") || child.name.includes("Kethuk")) {
                 child.userData.originalY = child.position.y;
                 pots.push(child);
@@ -555,7 +582,7 @@ gltfLoader.load('./Bonang.glb', (gltf) => {
     scene.add(bonangGroup);
 }, undefined, (e) => console.error("Bonang error", e));
 
-//  E. KECAPI 
+//  D. KECAPI 
 gltfLoader.load('./kecapi.glb', (gltf) => {
     
     const kecapi = normalizeModel(gltf.scene, 0.5); 
@@ -570,10 +597,11 @@ gltfLoader.load('./kecapi.glb', (gltf) => {
         if(c.isMesh) { 
             c.castShadow = true; 
             c.receiveShadow = true; 
+            collidableMeshList.push(c);
         }
     });
 
-    // Setup User Data untuk interaksi
+  
     kecapi.userData = { 
         type: 'instrument', 
         soundName: 'kecapi', 
@@ -584,27 +612,28 @@ gltfLoader.load('./kecapi.glb', (gltf) => {
 
     scene.add(kecapi);
 
-    // Masukkan ke array instruments (20 nada)
+  
     for(let i = 0; i < 20; i++) {
         instruments.kecapi.push(kecapi);
     }
 
-    // Tambahkan dudukan (meja kecil)
+
     const ped = new THREE.Mesh(
         new THREE.BoxGeometry(1.5, 0.5, 1.5), 
         new THREE.MeshStandardMaterial({ color: 0x5a3a22 })
     );
-    // Sesuaikan posisi dudukan (Y lebih rendah dari kecapi)
+
     ped.position.set(newKecapiPos.x, 0.25, newKecapiPos.z); 
     ped.rotation.y = Math.PI / 2; 
     
     ped.castShadow = true;
     ped.receiveShadow = true;
+    collidableMeshList.push(ped); 
     scene.add(ped);
 
 }, undefined, (e) => console.error("Kecapi error", e));
 
-// F. REBAB 
+// E. REBAB 
 gltfLoader.load('./rebab.glb', (gltf) => {
     
     const rebab = normalizeModel(gltf.scene, 2.0); 
@@ -618,10 +647,10 @@ gltfLoader.load('./rebab.glb', (gltf) => {
         if(c.isMesh) { 
             c.castShadow = true; 
             c.receiveShadow = true; 
+            collidableMeshList.push(c);
         }
     });
 
-    // Setup User Data untuk interaksi
     rebab.userData = { 
         type: 'instrument', 
         soundName: 'rebab', 
@@ -632,38 +661,38 @@ gltfLoader.load('./rebab.glb', (gltf) => {
 
     scene.add(rebab);
 
-    // Masukkan ke array instruments (20 nada)
     for(let i = 0; i < 20; i++) {
         instruments.rebab.push(rebab);
     }
 
-    // Tambahkan dudukan (meja kecil)
+
     const ped = new THREE.Mesh(
         new THREE.BoxGeometry(1.5, 0.5, 1.5), 
         new THREE.MeshStandardMaterial({ color: 0x5a3a22 })
     );
-    // Sesuaikan posisi dudukan (Y lebih rendah dari rebab)
+ 
     ped.position.set(newRebabPos.x, 0, newRebabPos.z); 
     ped.rotation.y = -Math.PI / 2; 
     
     ped.castShadow = true;
     ped.receiveShadow = true;
+    collidableMeshList.push(ped);
     scene.add(ped);
 
 }, undefined, (e) => console.error("Rebab error", e));
 
 
-// DEKORASI & PAINTINGS 
+// dekorasi
 gltfLoader.load('./bonsai.glb', (gltf) => {
     const bonsai = normalizeModel(gltf.scene, 3.1);
-    bonsai.traverse(c => { if(c.isMesh) { c.castShadow = true; c.receiveShadow = true; }});
+    bonsai.traverse(c => { if(c.isMesh) { c.castShadow = true; c.receiveShadow = true; collidableMeshList.push(c); }});
     bonsai.position.set(-10, 0, 8.7); 
     scene.add(bonsai);
 });
 
 gltfLoader.load('./bonsai_pink.glb', (gltf) => {
     const bonsai = normalizeModel(gltf.scene, 3.1);
-    bonsai.traverse(c => { if(c.isMesh) { c.castShadow = true; c.receiveShadow = true; }});
+    bonsai.traverse(c => { if(c.isMesh) { c.castShadow = true; c.receiveShadow = true; collidableMeshList.push(c); }});
     bonsai.position.set(10, 0, 8.6); 
     bonsai.rotation.y = Math.PI / 4;
     scene.add(bonsai);
@@ -671,7 +700,7 @@ gltfLoader.load('./bonsai_pink.glb', (gltf) => {
 
 gltfLoader.load('./painting_japanese.glb', (gltf) => {
     const painting = normalizeModel(gltf.scene, 3.1);
-    painting.traverse(c => { if(c.isMesh) { c.castShadow = true; c.receiveShadow = true; }});
+    painting.traverse(c => { if(c.isMesh) { c.castShadow = true; c.receiveShadow = true; collidableMeshList.push(c); }});
     painting.position.set(11, 0.6, 9.385);
     painting.rotation.y = Math.PI;
     scene.add(painting);
@@ -679,7 +708,7 @@ gltfLoader.load('./painting_japanese.glb', (gltf) => {
 
 gltfLoader.load('./painting_7.glb', (gltf) => {
     const painting = normalizeModel(gltf.scene, 2.8);
-    painting.traverse(c => { if(c.isMesh) { c.castShadow = true; c.receiveShadow = true; }});
+    painting.traverse(c => { if(c.isMesh) { c.castShadow = true; c.receiveShadow = true; collidableMeshList.push(c); }});
     painting.position.set(-10, 0.6, 9.85);
     painting.rotation.y = Math.PI;
     scene.add(painting);
@@ -687,7 +716,7 @@ gltfLoader.load('./painting_7.glb', (gltf) => {
 
 gltfLoader.load('./painting_5.glb', (gltf) => {
     const painting = gltf.scene;
-    painting.traverse(c => { if(c.isMesh) { c.castShadow = true; c.receiveShadow = true; }});
+    painting.traverse(c => { if(c.isMesh) { c.castShadow = true; c.receiveShadow = true; collidableMeshList.push(c); }});
     painting.scale.setScalar(2.6);
     painting.position.set(-21.875, 3, 5);
     painting.rotation.y = Math.PI / 2;
@@ -696,7 +725,7 @@ gltfLoader.load('./painting_5.glb', (gltf) => {
 
 gltfLoader.load('./painting_6.glb', (gltf) => {
     const painting = gltf.scene;
-    painting.traverse(c => { if(c.isMesh) { c.castShadow = true; c.receiveShadow = true; }});
+    painting.traverse(c => { if(c.isMesh) { c.castShadow = true; c.receiveShadow = true; collidableMeshList.push(c); }});
     painting.scale.setScalar(5.5);
     painting.position.set(-21.875, 3, -5);
     painting.rotation.y = Math.PI / 2;
@@ -705,7 +734,7 @@ gltfLoader.load('./painting_6.glb', (gltf) => {
 
 gltfLoader.load('./landscape_painting.glb', (gltf) => {
     const painting = normalizeModel(gltf.scene, 3.5);
-    painting.traverse(c => { if(c.isMesh) { c.castShadow = true; c.receiveShadow = true; }});
+    painting.traverse(c => { if(c.isMesh) { c.castShadow = true; c.receiveShadow = true; collidableMeshList.push(c); }});
     painting.position.set(21.8, -1, 6.2);
     painting.rotation.y = - Math.PI / 2;
     scene.add(painting);
@@ -713,14 +742,14 @@ gltfLoader.load('./landscape_painting.glb', (gltf) => {
 
 gltfLoader.load('./patung_kayu.glb', (gltf) => {
     const patungKayu = normalizeModel(gltf.scene, 2.5);
-    patungKayu.traverse(c => { if(c.isMesh) { c.castShadow = true; c.receiveShadow = true; }});
+    patungKayu.traverse(c => { if(c.isMesh) { c.castShadow = true; c.receiveShadow = true; collidableMeshList.push(c); }});
     patungKayu.position.set(0, 5, -19.5);
     scene.add(patungKayu);
 });
 
 gltfLoader.load('./table_display.glb', (gltf) => {
     const table = normalizeModel(gltf.scene, 1.2);
-    table.traverse(c => { if(c.isMesh) { c.castShadow = true; c.receiveShadow = true; }});
+    table.traverse(c => { if(c.isMesh) { c.castShadow = true; c.receiveShadow = true; collidableMeshList.push(c); }});
     table.position.set(21.5, 0, -1.85); 
     table.rotation.y = Math.PI / 2;
     scene.add(table);
@@ -728,23 +757,23 @@ gltfLoader.load('./table_display.glb', (gltf) => {
 
 gltfLoader.load('./table_display.glb', (gltf) => {
     const table = normalizeModel(gltf.scene, 1.2);
-    table.traverse(c => { if(c.isMesh) { c.castShadow = true; c.receiveShadow = true; }});
+    table.traverse(c => { if(c.isMesh) { c.castShadow = true; c.receiveShadow = true; collidableMeshList.push(c); }});
     table.position.set(21.5, 0, -6.5); 
     table.rotation.y = Math.PI / 2;
     scene.add(table);
 }, undefined, (e) => console.error("Table Display 2 error", e));
 
-// beside animal table
+
 gltfLoader.load('./plant_1.glb', (gltf) => {
     const plant = normalizeModel(gltf.scene, 3.5);
-    plant.traverse(c => { if(c.isMesh) { c.castShadow = true; c.receiveShadow = true; }});
+    plant.traverse(c => { if(c.isMesh) { c.castShadow = true; c.receiveShadow = true; collidableMeshList.push(c); }});
     plant.position.set(21, 0, -10.3);
     scene.add(plant);
 }, undefined, (e) => console.error("Plant beside table 2 error", e));
 
 gltfLoader.load('./bird_merak.glb', (gltf) => {
     const bird = normalizeModel(gltf.scene, 1.5);
-    bird.traverse(c => { if(c.isMesh) { c.castShadow = true; c.receiveShadow = true; }});
+    bird.traverse(c => { if(c.isMesh) { c.castShadow = true; c.receiveShadow = true; collidableMeshList.push(c); }});
     bird.position.set(21, 1.5, -4); 
     bird.rotation.y = Math.PI;
     scene.add(bird);
@@ -752,7 +781,7 @@ gltfLoader.load('./bird_merak.glb', (gltf) => {
 
 gltfLoader.load('./komodo.glb', (gltf) => {
     const komodo = normalizeModel(gltf.scene, 1.0);
-    komodo.traverse(c => { if(c.isMesh) { c.castShadow = true; c.receiveShadow = true; }});
+    komodo.traverse(c => { if(c.isMesh) { c.castShadow = true; c.receiveShadow = true; collidableMeshList.push(c); }});
     komodo.position.set(21, 2.55, -2.1); 
     komodo.rotation.y = Math.PI;
     scene.add(komodo);
@@ -760,7 +789,7 @@ gltfLoader.load('./komodo.glb', (gltf) => {
 
 gltfLoader.load('./rhino.glb', (gltf) => {
     const rhino = normalizeModel(gltf.scene, 0.9);
-    rhino.traverse(c => { if(c.isMesh) { c.castShadow = true; c.receiveShadow = true; }});
+    rhino.traverse(c => { if(c.isMesh) { c.castShadow = true; c.receiveShadow = true; collidableMeshList.push(c); }});
     rhino.position.set(21, 1.2, -6.45); 
     rhino.rotation.y = Math.PI;
     scene.add(rhino);
@@ -768,34 +797,30 @@ gltfLoader.load('./rhino.glb', (gltf) => {
 
 gltfLoader.load('./tiger.glb', (gltf) => {
     const tiger = normalizeModel(gltf.scene, 0.02);
-    tiger.traverse(c => { if(c.isMesh) { c.castShadow = true; c.receiveShadow = true; }});
+    tiger.traverse(c => { if(c.isMesh) { c.castShadow = true; c.receiveShadow = true; collidableMeshList.push(c); }});
     tiger.position.set(21.2, 1.2, -8.9); 
     tiger.rotation.y = Math.PI / 2;
     scene.add(tiger);
 }, undefined, (e) => console.error("Tiger error", e));
-// --- INFO BOARD FOR ANIMALS ---
+
 function createTextTexture(title, text) {
     const canvas = document.createElement('canvas');
     canvas.width = 1024;
     canvas.height = 512;
     const ctx = canvas.getContext('2d');
     
-    // Background
     ctx.fillStyle = 'rgba(20, 20, 20, 0.9)';
     ctx.fillRect(0, 0, 1024, 512);
     
-    // Border
     ctx.strokeStyle = '#7A4326';
     ctx.lineWidth = 20;
     ctx.strokeRect(10, 10, 1004, 492);
 
-    // Title
     ctx.font = 'bold 60px "Segoe UI", sans-serif';
     ctx.fillStyle = '#ffd700';
     ctx.textAlign = 'center';
     ctx.fillText(title, 512, 100);
 
-    // Text
     ctx.font = '40px "Segoe UI", sans-serif';
     ctx.fillStyle = '#ffffff';
     ctx.textAlign = 'center';
@@ -845,7 +870,7 @@ scene.add(InfoKelMesh2);
 
 gltfLoader.load('./wayang_1.glb', (gltf) => {
     const wayang1 = normalizeModel(gltf.scene, 3.5);
-    wayang1.traverse(c => { if(c.isMesh) { c.castShadow = true; c.receiveShadow = true; }});
+    wayang1.traverse(c => { if(c.isMesh) { c.castShadow = true; c.receiveShadow = true; collidableMeshList.push(c); }});
     wayang1.position.set(20, 3.1, 3);
     wayang1.rotation.y = Math.PI;
     scene.add(wayang1);
@@ -853,7 +878,7 @@ gltfLoader.load('./wayang_1.glb', (gltf) => {
 
 gltfLoader.load('./wayang_2.glb', (gltf) => {
     const wayang2 = normalizeModel(gltf.scene, 3.5);
-    wayang2.traverse(c => { if(c.isMesh) { c.castShadow = true; c.receiveShadow = true; }});
+    wayang2.traverse(c => { if(c.isMesh) { c.castShadow = true; c.receiveShadow = true; collidableMeshList.push(c); }});
     wayang2.position.set(20, 2.8, 6);
     wayang2.rotation.y = -Math.PI / 2;
     scene.add(wayang2);
@@ -861,7 +886,7 @@ gltfLoader.load('./wayang_2.glb', (gltf) => {
 
 gltfLoader.load('./wayang_3.glb', (gltf) => {
     const wayang3 = normalizeModel(gltf.scene, 3.5);
-    wayang3.traverse(c => { if(c.isMesh) { c.castShadow = true; c.receiveShadow = true; }});
+    wayang3.traverse(c => { if(c.isMesh) { c.castShadow = true; c.receiveShadow = true; collidableMeshList.push(c); }});
     wayang3.position.set(20, 4, 9);
     wayang3.rotation.y = -Math.PI / 2;
     scene.add(wayang3);
@@ -905,38 +930,37 @@ kolintangConfig.forEach((item) => {
             instruments.kolintang.push(model);
             instruments.kolintang.sort((a, b) => a.position.x - b.position.x);
         }
-        model.traverse(c => { if(c.isMesh) { c.castShadow = true; c.receiveShadow = true; }});
+        model.traverse(c => { if(c.isMesh) { c.castShadow = true; c.receiveShadow = true; collidableMeshList.push(c); }});
         scene.add(model);
     }, undefined, (e) => console.error(`Error ${item.fileName}`, e));
 });
 
-// MORE PAINTINGS & STATUES 
 
 gltfLoader.load('./painting_1.glb', (gltf) => {
     const painting = normalizeModel(gltf.scene, 3.6);
     painting.position.set(0, 7, -18.8); 
-    painting.traverse(c => { if(c.isMesh) { c.castShadow = true; c.receiveShadow = true; }});
+    painting.traverse(c => { if(c.isMesh) { c.castShadow = true; c.receiveShadow = true; collidableMeshList.push(c); }});
     scene.add(painting);
 });
 
 gltfLoader.load('./painting_2.glb', (gltf) => {
     const painting = normalizeModel(gltf.scene, 3.5);
     painting.position.set(0, -5.4, -31.2); 
-    painting.traverse(c => { if(c.isMesh) { c.castShadow = true; c.receiveShadow = true; }});
+    painting.traverse(c => { if(c.isMesh) { c.castShadow = true; c.receiveShadow = true; collidableMeshList.push(c); }});
     scene.add(painting);
 });
 
 gltfLoader.load('./painting_3.glb', (gltf) => {
     const painting = normalizeModel(gltf.scene, 3.6);
     painting.position.set(-18, 3.4, -18.8); 
-    painting.traverse(c => { if(c.isMesh) { c.castShadow = true; c.receiveShadow = true; }});
+    painting.traverse(c => { if(c.isMesh) { c.castShadow = true; c.receiveShadow = true; collidableMeshList.push(c); }});
     scene.add(painting);
 });
 
 gltfLoader.load('./painting_4.glb', (gltf) => {
     const painting = normalizeModel(gltf.scene, 3.6);
     painting.position.set(18, 3.2, -18.8); 
-    painting.traverse(c => { if(c.isMesh) { c.castShadow = true; c.receiveShadow = true; }});
+    painting.traverse(c => { if(c.isMesh) { c.castShadow = true; c.receiveShadow = true; collidableMeshList.push(c); }});
     scene.add(painting);
 });
 
@@ -944,20 +968,20 @@ gltfLoader.load('./art_1.glb', (gltf) => {
     const art = normalizeModel(gltf.scene, 3);
     art.position.set(0, -0.1, -18.3); 
     art.rotation.y = Math.PI / 2;
-    art.traverse(c => { if(c.isMesh) { c.castShadow = true; c.receiveShadow = true; }});
+    art.traverse(c => { if(c.isMesh) { c.castShadow = true; c.receiveShadow = true; collidableMeshList.push(c); }});
     scene.add(art);
 });
 
 gltfLoader.load('./flower_1.glb', (gltf) => {
     const flower = normalizeModel(gltf.scene, 2.5);
-    flower.traverse(c => { if(c.isMesh) { c.castShadow = true; c.receiveShadow = true; }});
+    flower.traverse(c => { if(c.isMesh) { c.castShadow = true; c.receiveShadow = true; collidableMeshList.push(c); }});
     flower.position.set(-12.9, -0.1, -18.1);
     scene.add(flower);
 });
 
 gltfLoader.load('./flower_1.glb', (gltf) => {
     const flower = normalizeModel(gltf.scene, 2.5);
-    flower.traverse(c => { if(c.isMesh) { c.castShadow = true; c.receiveShadow = true; }});
+    flower.traverse(c => { if(c.isMesh) { c.castShadow = true; c.receiveShadow = true; collidableMeshList.push(c); }});
     flower.position.set(13.1, -0.1, -18.1);
     scene.add(flower);
 });
@@ -966,34 +990,34 @@ gltfLoader.load('./patung_1.glb', (gltf) => {
     const art = normalizeModel(gltf.scene, 3);
     art.position.set(-20, -0.35, 5.1); 
     art.rotation.y = Math.PI / 2;
-    art.traverse(c => { if(c.isMesh) { c.castShadow = true; c.receiveShadow = true; }});
+    art.traverse(c => { if(c.isMesh) { c.castShadow = true; c.receiveShadow = true; collidableMeshList.push(c); }});
     scene.add(art);
 });
 
 gltfLoader.load('./plant_1.glb', (gltf) => {
     const plant = normalizeModel(gltf.scene, 4.5);
-    plant.traverse(c => { if(c.isMesh) { c.castShadow = true; c.receiveShadow = true; }});
+    plant.traverse(c => { if(c.isMesh) { c.castShadow = true; c.receiveShadow = true; collidableMeshList.push(c); }});
     plant.position.set(-20.9, 0, 8.5);
     scene.add(plant);
 });
 
 gltfLoader.load('./plant_1.glb', (gltf) => {
     const plant = normalizeModel(gltf.scene, 4.5);
-    plant.traverse(c => { if(c.isMesh) { c.castShadow = true; c.receiveShadow = true; }});
+    plant.traverse(c => { if(c.isMesh) { c.castShadow = true; c.receiveShadow = true; collidableMeshList.push(c); }});
     plant.position.set(21, 0, 1);
     scene.add(plant);
 });
 
 gltfLoader.load('./plant_2.glb', (gltf) => {
     const plant = normalizeModel(gltf.scene, 2);
-    plant.traverse(c => { if(c.isMesh) { c.castShadow = true; c.receiveShadow = true; }});
+    plant.traverse(c => { if(c.isMesh) { c.castShadow = true; c.receiveShadow = true; collidableMeshList.push(c); }});
     plant.position.set(-21, 0, 0.4);
     scene.add(plant);
 });
 
 gltfLoader.load('./patung_bali_1.glb', (gltf) => {
     const patungBali1 = normalizeModel(gltf.scene, 3);
-    patungBali1.traverse(c => { if(c.isMesh) { c.castShadow = true; c.receiveShadow = true; }});
+    patungBali1.traverse(c => { if(c.isMesh) { c.castShadow = true; c.receiveShadow = true; collidableMeshList.push(c); }});
     patungBali1.position.set(-19.7, 0.6, -5);
     patungBali1.rotation.y = Math.PI / 2;
     scene.add(patungBali1);
@@ -1001,7 +1025,7 @@ gltfLoader.load('./patung_bali_1.glb', (gltf) => {
 
 gltfLoader.load('./patung_bali_2.glb', (gltf) => {
     const patungBali2 = normalizeModel(gltf.scene, 2.5);
-    patungBali2.traverse(c => { if(c.isMesh) { c.castShadow = true; c.receiveShadow = true; }});
+    patungBali2.traverse(c => { if(c.isMesh) { c.castShadow = true; c.receiveShadow = true; collidableMeshList.push(c); }});
     patungBali2.position.set(-18.9, 1.3, -8);
     patungBali2.rotation.y = Math.PI / 2;
     scene.add(patungBali2);
@@ -1009,7 +1033,7 @@ gltfLoader.load('./patung_bali_2.glb', (gltf) => {
 
 gltfLoader.load('./patung_bali_3.glb', (gltf) => {
     const patungBali3 = normalizeModel(gltf.scene, 3);
-    patungBali3.traverse(c => { if(c.isMesh) { c.castShadow = true; c.receiveShadow = true; }});
+    patungBali3.traverse(c => { if(c.isMesh) { c.castShadow = true; c.receiveShadow = true; collidableMeshList.push(c); }});
     patungBali3.position.set(-19.3, 0.9, -2.4);
     patungBali3.rotation.y = Math.PI / 2;
     scene.add(patungBali3);
@@ -1017,35 +1041,35 @@ gltfLoader.load('./patung_bali_3.glb', (gltf) => {
 
 gltfLoader.load('./plant_1.glb', (gltf) => {
     const plant = normalizeModel(gltf.scene, 3);
-    plant.traverse(c => { if(c.isMesh) { c.castShadow = true; c.receiveShadow = true; }});
+    plant.traverse(c => { if(c.isMesh) { c.castShadow = true; c.receiveShadow = true; collidableMeshList.push(c); }});
     plant.position.set(-21, 0, -9.4);
     scene.add(plant);
 });
 
 gltfLoader.load('./plant_1.glb', (gltf) => {
     const plant = normalizeModel(gltf.scene, 4);
-    plant.traverse(c => { if(c.isMesh) { c.castShadow = true; c.receiveShadow = true; }});
+    plant.traverse(c => { if(c.isMesh) { c.castShadow = true; c.receiveShadow = true; collidableMeshList.push(c); }});
     plant.position.set(-21, 0, 14);
     scene.add(plant);
 });
 
 gltfLoader.load('./plant_1.glb', (gltf) => {
     const plant = normalizeModel(gltf.scene, 2);
-    plant.traverse(c => { if(c.isMesh) { c.castShadow = true; c.receiveShadow = true; }});
+    plant.traverse(c => { if(c.isMesh) { c.castShadow = true; c.receiveShadow = true; collidableMeshList.push(c); }});
     plant.position.set(-21, 0, 17);
     scene.add(plant);
 });
 
 gltfLoader.load('./plant_1.glb', (gltf) => {
     const plant = normalizeModel(gltf.scene, 3);
-    plant.traverse(c => { if(c.isMesh) { c.castShadow = true; c.receiveShadow = true; }});
+    plant.traverse(c => { if(c.isMesh) { c.castShadow = true; c.receiveShadow = true; collidableMeshList.push(c); }});
     plant.position.set(-21, 0, 20);
     scene.add(plant);
 });
 
 gltfLoader.load('./plant_1.glb', (gltf) => {
     const plant = normalizeModel(gltf.scene, 3);
-    plant.traverse(c => { if(c.isMesh) { c.castShadow = true; c.receiveShadow = true; }});
+    plant.traverse(c => { if(c.isMesh) { c.castShadow = true; c.receiveShadow = true; collidableMeshList.push(c); }});
     plant.position.set(21, 0, 27.5);
     scene.add(plant);
 });
@@ -1056,7 +1080,7 @@ gltfLoader.load('./indonesia.glb', (gltf) => {
     indonesia.rotation.z = Math.PI / 2;
     indonesia.rotation.x = Math.PI / 2;
     
-    indonesia.traverse(c => { if(c.isMesh) { c.castShadow = true; c.receiveShadow = true; }});
+    indonesia.traverse(c => { if(c.isMesh) { c.castShadow = true; c.receiveShadow = true; collidableMeshList.push(c); }});
     scene.add(indonesia);
 });
 
@@ -1065,7 +1089,7 @@ gltfLoader.load('./indonesian_traditional_cake.glb', (gltf) => {
     cake.position.set(-20.5, 2.2, 25); 
     cake.rotation.z = -Math.PI / 3;
     cake.rotation.x = -Math.PI / 3;
-    cake.traverse(c => { if(c.isMesh) { c.castShadow = true; c.receiveShadow = true; }});
+    cake.traverse(c => { if(c.isMesh) { c.castShadow = true; c.receiveShadow = true; collidableMeshList.push(c); }});
     scene.add(cake);
 });
 
@@ -1082,12 +1106,12 @@ gltfLoader.load('./chandelier_2.glb', (gltf) => {
     chandelierPositions.forEach(pos => {
         const chandelier = originalChandelier.clone();
         chandelier.position.set(pos.x, pos.y, pos.z);
-        chandelier.traverse(c => { if(c.isMesh) { c.castShadow = true; c.receiveShadow = true; }});
+        chandelier.traverse(c => { if(c.isMesh) { c.castShadow = true; c.receiveShadow = true; collidableMeshList.push(c); }});
         scene.add(chandelier);
     });
 }, undefined, (e) => console.error("Chandelier error", e));
 
-// --- 4. AUDIO SYSTEM ---
+// sistem suara
 const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
 const soundBuffers = {};
 async function loadSoundFile(name, url) {
@@ -1119,17 +1143,16 @@ function playSound(name, pitchCents) {
     source.start(0);
 }
 
-// --- FUNGSI TRIGGER INSTRUMENT ---
+// animasi interaksi alat musik dimainkan
 function triggerInstrument(obj, pitchOverride) {
     if (!obj || !obj.userData || obj.userData.type !== 'instrument') return;
 
-    // 1. Mainkan Suara
+    // Mainkan Suara
     const pitch = (typeof pitchOverride === 'number') ? pitchOverride : (obj.userData.pitch || 0);
     playSound(obj.userData.soundName, pitch);
 
-    // 2. Animasi Visual
+    // Animasi Visual
     if (obj.userData.soundName === 'bonang') {
-        // Karena Bonang terdiri dari banyak Mesh, animasikan hanya yang disentuh
         if (obj.userData.animTimeout) clearTimeout(obj.userData.animTimeout);
         obj.position.y = obj.userData.originalY + 0.3;
         obj.userData.animTimeout = setTimeout(() => {
@@ -1137,11 +1160,10 @@ function triggerInstrument(obj, pitchOverride) {
             obj.userData.animTimeout = null;
         }, 150);
     } else {
-        // Animation Scale (Angklung, Gong, Kecapi, Rebab, Kolintang)
         if (obj.userData.originalScale) {
             if (obj.userData.animTimeout) clearTimeout(obj.userData.animTimeout);
             obj.scale.copy(obj.userData.originalScale);
-            obj.scale.multiplyScalar(1.05); // Sedikit membesar
+            obj.scale.multiplyScalar(1.05); 
             obj.userData.animTimeout = setTimeout(() => {
                 obj.scale.copy(obj.userData.originalScale);
                 obj.userData.animTimeout = null;
@@ -1150,7 +1172,7 @@ function triggerInstrument(obj, pitchOverride) {
     }
 }
 
-// --- 5. LOGIKA INFORMASI & PROXIMITY ---
+// informasi dan proximity
 const infoPanel = document.getElementById('info-panel');
 const infoTitle = document.getElementById('info-title');
 const infoDesc = document.getElementById('info-desc');
@@ -1159,7 +1181,7 @@ const controlsHint = document.getElementById('controls-hint');
 const modeIndicator = document.getElementById('mode-indicator');
 const crosshair = document.getElementById('crosshair');
 
-// Tambahkan elemen untuk Tab Playback
+
 const tabActionPrompt = document.createElement('div');
 tabActionPrompt.id = 'tab-action-prompt';
 tabActionPrompt.innerHTML = 'TEKAN <kbd>TAB</kbd> UNTUK MAIN "GUNDHUL PACUL"';
@@ -1219,7 +1241,7 @@ function checkProximity() {
             infoDesc.innerText = data.desc;
             infoPanel.style.opacity = 1;
             actionPrompt.style.opacity = 1; 
-            tabActionPrompt.style.display = 'block'; // Tampilkan prompt TAB
+            tabActionPrompt.style.display = 'block';
             infoPanel.style.borderLeftColor = "#ffd700";
             activeInstrumentName = key;
             found = true;
@@ -1228,20 +1250,18 @@ function checkProximity() {
     }
     if (!found) {
         infoPanel.style.opacity = 0;
-        tabActionPrompt.style.display = 'none'; // Sembunyikan prompt TAB
+        tabActionPrompt.style.display = 'none'; 
         activeInstrumentName = null;
     }
 }
 
-// --- 6. INTERACTION & CONTROLS ---
+// interaksi
 const controls = new PointerLockControls(camera, document.body);
 const overlay = document.getElementById('overlay');
 const enterBtn = document.getElementById('enter-btn');
 
-// Show overlay on load
 overlay.style.display = 'flex';
 
-// Handle Enter Button Click
 enterBtn.addEventListener('click', async (e) => {
     e.stopPropagation();
     await initAudio();
@@ -1252,7 +1272,6 @@ enterBtn.addEventListener('click', async (e) => {
     }, 800);
 });
 
-// Handle clicking anywhere on overlay (except button)
 overlay.addEventListener('click', async (e) => {
     if (e.target === enterBtn) return;
     await initAudio();
@@ -1279,7 +1298,6 @@ controls.addEventListener('unlock', () => {
     modeIndicator.style.display = 'none';
     controlsHint.style.display = 'none';
     crosshair.classList.remove('crosshair-active');
-    // Show overlay again when unlocked
     overlay.style.display = 'flex';
     overlay.style.opacity = '1';
     document.body.style.cursor = 'pointer';
@@ -1307,7 +1325,7 @@ const keyMap = {
 
 const move = { w: false, a: false, s: false, d: false };
 
-// --- LOGIKA PLAYBACK GUNDHUL PACUL ---
+// Gundul-gundul pacul
 
 // Notasi Angka Gundhul Pacul (Do=C, 4/4 Moderato)
 // Nada: 1=C, 2=D, 3=E, 4=F, 5=G, 6=A, 7=B
@@ -1362,7 +1380,7 @@ const basePitches = {
 };
 
 function playGundhulPacul(instrumentName) {
-    if (isPlayingGundhulPacul) return; // Mencegah multiple playback
+    if (isPlayingGundhulPacul) return; 
     isPlayingGundhulPacul = true;
     modeIndicator.innerText = `♫ ${instrumentName.toUpperCase()} - GUNDHUL PACUL ♫\nTekan TAB untuk Henti`;
     modeIndicator.style.display = 'block';
@@ -1370,51 +1388,42 @@ function playGundhulPacul(instrumentName) {
     let noteIndex = 0;
     let currentDelay = 0;
     
-    // Fungsi rekursif untuk memainkan notasi
     const playNextNote = () => {
         if (!isPlayingGundhulPacul || noteIndex >= gundhulPaculNotation.length) {
             isPlayingGundhulPacul = false;
             modeIndicator.style.display = 'none';
-            checkProximity(); // Refresh UI setelah selesai
+            checkProximity();
             return;
         }
 
         const noteData = gundhulPaculNotation[noteIndex];
         const durationMs = noteData.duration * tempo;
         
-        if (noteData.note !== 0) { // Cek apakah ini bukan notasi diam (rest)
+        if (noteData.note !== 0) { 
             const basePitch = basePitches[noteData.note];
             const pitchCents = basePitch + (noteData.octaveShift * 1200);
             
-            // Logika untuk memilih objek yang tepat, terutama Bonang dan Angklung
             let targetObject = null;
             if (instrumentName === 'gong' || instrumentName === 'kecapi' || instrumentName === 'rebab') {
-                // Untuk instrumen 1 model (Gong, Kecapi, Rebab), gunakan objek pertama
                 targetObject = instruments[instrumentName][0];
             } else if (instrumentName === 'angklung') {
-                // Angklung: menggunakan pitch semitone (0, 2, 4, 5, 7, 9, 11, 12)
                 const angklungPitches = [0, 200, 400, 500, 700, 900, 1100, 1200];
-                const targetPitch = pitchCents % 1200; // Hanya perlu base pitch (C4 - B4)
+                const targetPitch = pitchCents % 1200; 
                 const closestPitchIndex = angklungPitches.map(p => Math.abs(p - targetPitch)).indexOf(Math.min(...angklungPitches.map(p => Math.abs(p - targetPitch))));
                 targetObject = instruments.angklung[closestPitchIndex];
             } else if (instrumentName === 'bonang') {
-                // Bonang: Menggunakan 8 pot, mapping notasi angka ke pot Bonang
-                const bonangNotes = [1, 2, 3, 4, 5, 6, 7, 1]; // Asumsi 8 pot dari 1-7 kembali ke 1
-                const mapIndex = (noteData.note - 1) % instruments.bonang.length; // 1 -> 0, 2 -> 1, dst.
+                const bonangNotes = [1, 2, 3, 4, 5, 6, 7, 1];
+                const mapIndex = (noteData.note - 1) % instruments.bonang.length;
                 targetObject = instruments.bonang[mapIndex];
             } else if (instrumentName === 'kolintang') {
-                 // Kolintang: 16 blok, mapping 1-7 ke range yang sesuai (misalnya 7 blok pertama)
                 const kolintangMapIndex = (noteData.note - 1) % 7; 
                 targetObject = instruments.kolintang[kolintangMapIndex];
             }
 
             if (targetObject) {
-                // Pitch untuk Angklung, Kecapi, Rebab di-handle di sini karena pitch instrument beda-beda
                 if (instrumentName === 'angklung' || instrumentName === 'kecapi' || instrumentName === 'rebab') {
                      triggerInstrument(targetObject, pitchCents);
                 } else {
-                     // Bonang/Kolintang/Gong, biarkan triggerInstrument pakai pitch default atau pitchCents
-                     // Bonang/Kolintang: pitchCents adalah 100 * index. Gunakan pitch semitone dari notasi.
                      triggerInstrument(targetObject, pitchCents);
                 }
             }
@@ -1424,7 +1433,7 @@ function playGundhulPacul(instrumentName) {
         playbackTimeout = setTimeout(playNextNote, durationMs);
     };
 
-    playNextNote(); // Mulai pemutaran
+    playNextNote(); 
 }
 
 
@@ -1433,7 +1442,7 @@ document.addEventListener('keydown', (e) => {
 
     if (e.key === 'Control') {
         if (activeInstrumentName) {
-            if (isPlayingGundhulPacul) return; // Abaikan CTRL saat lagu dimainkan
+            if (isPlayingGundhulPacul) return; 
             
             isPerforming = !isPerforming; 
             if (isPerforming) {
@@ -1449,25 +1458,23 @@ document.addEventListener('keydown', (e) => {
                 modeIndicator.style.display = 'none';
                 controlsHint.style.display = 'none';
                 actionPrompt.style.opacity = 1; 
-                tabActionPrompt.style.display = 'block'; // Tampilkan lagi prompt TAB
+                tabActionPrompt.style.display = 'block'; 
                 crosshair.classList.remove('crosshair-active');
             }
         }
         return; 
     }
     
-    // Logika Playback Otomatis
+    // logika playback otomatis
     if (e.code === 'Tab' && activeInstrumentName) {
         e.preventDefault(); 
         if (isPlayingGundhulPacul) {
-            // Stop Playback
             isPlayingGundhulPacul = false;
             if (playbackTimeout) clearTimeout(playbackTimeout);
             modeIndicator.style.display = 'none';
-            checkProximity(); // Tampilkan UI normal
+            checkProximity(); 
             return;
         } else if (!isPerforming) {
-            // Start Playback
             playGundhulPacul(activeInstrumentName);
             return;
         }
@@ -1517,7 +1524,21 @@ document.addEventListener('keyup', (e) => {
     if (e.code === 'KeyD') move.d = false;
 });
 
-// --- 7. ANIMATION LOOP ---
+// collision helper
+function checkWallCollision(directionVector) {
+    const origin = camera.position.clone();
+    origin.y = 0.5; 
+    
+    collisionRaycaster.set(origin, directionVector);
+    const intersects = collisionRaycaster.intersectObjects(collidableMeshList, true);
+    
+    if (intersects.length > 0) {
+        return true;
+    }
+    return false;
+}
+
+// looping animasi
 const velocity = new THREE.Vector3();
 const direction = new THREE.Vector3();
 const clock = new THREE.Clock();
@@ -1533,16 +1554,47 @@ function animate() {
         velocity.x -= velocity.x * 10.0 * delta; 
         velocity.z -= velocity.z * 10.0 * delta;
 
-        direction.z = Number(move.w) - Number(move.s);
-        direction.x = Number(move.d) - Number(move.a);
+        // collision
+        const forward = new THREE.Vector3();
+        camera.getWorldDirection(forward);
+        forward.y = 0;
+        forward.normalize();
+
+        const right = new THREE.Vector3();
+        right.crossVectors(forward, camera.up).normalize();
+
+        const backward = forward.clone().negate();
+        const left = right.clone().negate();
+
+        const blocked = { w: false, s: false, a: false, d: false };
+
+        if (move.w && checkWallCollision(forward)) blocked.w = true;
+        if (move.s && checkWallCollision(backward)) blocked.s = true;
+        if (move.a && checkWallCollision(left)) blocked.a = true;
+        if (move.d && checkWallCollision(right)) blocked.d = true;
+
+        const effectiveW = move.w && !blocked.w;
+        const effectiveS = move.s && !blocked.s;
+        const effectiveA = move.a && !blocked.a;
+        const effectiveD = move.d && !blocked.d;
+
+        direction.z = Number(effectiveW) - Number(effectiveS);
+        direction.x = Number(effectiveD) - Number(effectiveA);
         direction.normalize();
 
-        if (move.w || move.s) velocity.z -= direction.z * 50.0 * delta;
-        if (move.a || move.d) velocity.x -= direction.x * 50.0 * delta;
+        if (blocked.w && velocity.z > 0) velocity.z = 0;
+        if (blocked.s && velocity.z < 0) velocity.z = 0;
+        if (blocked.a && velocity.x < 0) velocity.x = 0; 
+        if (blocked.d && velocity.x > 0) velocity.x = 0;
+
+
+        if (effectiveW || effectiveS) velocity.z -= direction.z * 50.0 * delta;
+        if (effectiveA || effectiveD) velocity.x -= direction.x * 50.0 * delta;
 
         controls.moveRight(-velocity.x * delta);
         controls.moveForward(-velocity.z * delta);
 
+        // animasi interaksi dengan alat musik di klik
         raycaster.setFromCamera(new THREE.Vector2(0, 0), camera);
         const intersects = raycaster.intersectObjects(scene.children, true);
         
